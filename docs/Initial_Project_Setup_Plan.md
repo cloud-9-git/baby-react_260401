@@ -25,9 +25,23 @@ index.html
 package.json
 src/
   constants.js
-  lib.js
   history.js
-  lib.test.js
+  lib/
+    domToVdom.js
+    vdomToDom.js
+    renderTo.js
+    diff.js
+    applyPatches.js
+  lib.js
+tests/
+  lib/
+    domToVdom/
+    vdomToDom/
+    renderTo/
+    diff/
+    applyPatches/
+  history/
+    createHistory/
 ```
 
 ## 3. `package.json` 기준
@@ -79,41 +93,57 @@ export const PatchType = Object.freeze({
 });
 ```
 
-## 5. `src/lib.js` 시그니처
+## 5. `src/lib/` 기능별 시그니처
 
-처음에는 함수 몸체를 구현하지 않고 자리만 만든다.
+`lib.js`에 모든 구현을 몰아넣지 않고 기능별 파일로 나눈다.
+
+`src/lib/domToVdom.js`
 
 ```js
-export { NodeType, PatchType, textNode, elementNode } from "./constants.js";
-
 /**
  * 담당: 위승철
  */
 export function domToVdom(domNode) {
   // TODO
 }
+```
 
+`src/lib/vdomToDom.js`
+
+```js
 /**
  * 담당: 위승철
  */
 export function vdomToDom(vnode) {
   // TODO
 }
+```
 
+`src/lib/renderTo.js`
+
+```js
 /**
  * 담당: 위승철
  */
 export function renderTo(container, vdom) {
   // TODO
 }
+```
 
+`src/lib/diff.js`
+
+```js
 /**
  * 담당: 이진혁
  */
 export function diff(oldVdom, newVdom) {
   // TODO
 }
+```
 
+`src/lib/applyPatches.js`
+
+```js
 /**
  * 담당: 이진혁
  */
@@ -122,7 +152,20 @@ export function applyPatches(rootDom, patches) {
 }
 ```
 
-## 6. `src/history.js` 시그니처
+## 6. `src/lib.js` 집합 진입점
+
+`src/lib.js`는 기능별 파일을 다시 모아 외부에 공개하는 집합 진입점으로만 둔다.
+
+```js
+export { NodeType, PatchType, textNode, elementNode } from "./constants.js";
+export { domToVdom } from "./lib/domToVdom.js";
+export { vdomToDom } from "./lib/vdomToDom.js";
+export { renderTo } from "./lib/renderTo.js";
+export { diff } from "./lib/diff.js";
+export { applyPatches } from "./lib/applyPatches.js";
+```
+
+## 7. `src/history.js` 시그니처
 
 ```js
 /**
@@ -148,33 +191,31 @@ export function createHistory(initialVdom) {
 }
 ```
 
-## 7. `src/lib.test.js` 초기 구성
+## 8. `tests/` 초기 구성
 
-테스트 파일도 구조만 먼저 만든다.
+테스트 코드는 `src` 바깥의 별도 `tests/` 폴더에서 관리한다.
 
-```js
-import { describe, it, expect } from "vitest";
-import {
-  domToVdom,
-  vdomToDom,
-  renderTo,
-  diff,
-  applyPatches,
-  textNode,
-  elementNode,
-  PatchType,
-} from "./lib.js";
-import { createHistory } from "./history.js";
+- `tests/lib/domToVdom/`는 `src/lib/domToVdom.js`를 본다.
+- `tests/lib/vdomToDom/`는 `src/lib/vdomToDom.js`를 본다.
+- `tests/lib/renderTo/`는 `src/lib/renderTo.js`를 본다.
+- `tests/lib/diff/`는 `src/lib/diff.js`를 본다.
+- `tests/lib/applyPatches/`는 `src/lib/applyPatches.js`를 본다.
+- `tests/history/createHistory/`는 `src/history.js`를 본다.
 
-describe("placeholder", () => {
-  it("setup", () => {
-    expect(typeof textNode).toBe("function");
-    expect(typeof elementNode).toBe("function");
-  });
-});
-```
+담당자 기준은 아래처럼 맞춘다.
 
-## 8. `index.html` 초기 구성
+- 위승철: `domToVdom`, `vdomToDom`, `renderTo`
+- 이진혁: `diff`, `applyPatches`
+- 양시준: `createHistory`, 데모 UI
+
+각 담당자는 자기 범위 파일 이름에 맞는 테스트를 직접 추가하고 확장한다.
+
+- 테스트 폴더 이름은 대상 소스 파일 이름과 맞춘다.
+- 각 폴더 안에는 필요한 만큼 개별 테스트케이스 파일을 추가한다.
+- 공용 테스트 파일 하나에 모두 몰아넣지 않는다.
+- `src/lib.js` 자체는 집합 진입점이므로 전용 테스트 대상이라기보다 개별 기능 파일 테스트를 통해 검증한다.
+
+## 9. `index.html` 초기 구성
 
 - 담당: 양시준
 - 데모 UI 범위는 `index.html`, CSS 구성까지 포함한다.
@@ -182,18 +223,20 @@ describe("placeholder", () => {
 - `index.html`에서 `src/lib.js`를 직접 모듈로 연결해 사용한다.
 - 이 문서에는 그 연결 방식에 대한 예시 코드는 포함하지 않는다.
 
-## 9. 구현 시작 순서
+## 10. 구현 시작 순서
 
 1. `constants.js`
-2. `lib.js`의 `vdomToDom`
-3. `lib.js`의 `domToVdom`
-4. `renderTo`
-5. `diff`
-6. `applyPatches`
-7. `history.js`
-8. 테스트 보강
+2. `src/lib/` 아래 기능별 파일 시그니처 작성
+3. `src/lib.js`에서 공개 export 연결
+4. `vdomToDom`
+5. `domToVdom`
+6. `renderTo`
+7. `diff`
+8. `applyPatches`
+9. `history.js`
+10. 파일별 테스트 보강
 
-## 10. 이 문서의 범위
+## 11. 이 문서의 범위
 
 이 문서는 아래만 다룬다.
 
