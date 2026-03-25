@@ -82,48 +82,100 @@
         white-space: nowrap;
       }
 
-      .history-compare {
-        margin-top: 16px;
-      }
-
-      .compare-card {
-        padding: 16px;
+      .history-panel {
+        margin-top: 8px;
+        display: grid;
+        gap: 8px;
+        padding: 12px;
         border: 1px solid #d0d0d0;
         border-radius: 8px;
         background: #fff;
       }
 
-      .compare-card {
-        width: 100%;
+      .patch-list {
+        display: grid;
+        gap: 8px;
       }
 
-      .compare-card h3,
-      .compare-card p,
-      .compare-card h4 {
-        margin-top: 0;
+      .split-view {
+        border: 1px solid #d0d0d0;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #fff;
       }
 
-      .compare-summary {
-        margin-bottom: 12px;
-        color: #666;
-      }
-
-      .compare-columns {
+      .split-head {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 12px;
+        background: #f3f4f6;
+        border-bottom: 1px solid #d0d0d0;
       }
 
-      .compare-pane h4 {
-        margin-bottom: 8px;
+      .split-head div {
+        padding: 10px 12px;
+        font-weight: 600;
+      }
+
+      .split-head div:first-child {
+        border-right: 1px solid #d0d0d0;
+      }
+
+      .split-row {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .split-row + .split-row {
+        border-top: 1px solid #e5e7eb;
+      }
+
+      .split-cell {
+        min-height: 20px;
+        padding: 4px 8px;
+        overflow: auto;
+        white-space: pre;
+        font-family: "SFMono-Regular", "JetBrains Mono", monospace;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .split-cell:first-child {
+        border-right: 1px solid #e5e7eb;
+      }
+
+      .split-cell.added {
+        background: #15391e;
+        color: #d9ffe3;
+      }
+
+      .split-cell.removed {
+        background: #452021;
+        color: #ffd9db;
+      }
+
+      .patch-accordion {
+        border: 1px solid #d0d0d0;
+        border-radius: 8px;
+        background: #fafafa;
+      }
+
+      .patch-accordion[open] {
+        background: #fff;
+      }
+
+      .patch-summary {
+        padding: 10px 12px;
+        cursor: pointer;
+        font-family: "SFMono-Regular", "JetBrains Mono", monospace;
+        font-size: 13px;
       }
 
       .code-block {
-        min-height: 220px;
         margin: 0;
         padding: 12px;
         overflow: auto;
-        border-radius: 8px;
+        border-top: 1px solid #d0d0d0;
+        border-radius: 0 0 8px 8px;
         background: #111827;
         color: #f3f4f6;
         font-family: "SFMono-Regular", "JetBrains Mono", monospace;
@@ -136,27 +188,19 @@
         white-space: pre;
       }
 
-      .code-line.added {
-        background: #15391e;
-        color: #d9ffe3;
-      }
-
-      .code-line.removed {
-        background: #452021;
-        color: #ffd9db;
-      }
-
-      .code-line.placeholder {
-        color: #9ca3af;
-      }
-
       @media (max-width: 720px) {
         .container {
           grid-template-columns: 1fr;
         }
 
-        .compare-columns {
+        .split-head,
+        .split-row {
           grid-template-columns: 1fr;
+        }
+
+        .split-head div:first-child,
+        .split-cell:first-child {
+          border-right: 0;
         }
       }
     </style>
@@ -173,17 +217,7 @@
     <div class="container">
       <div class="panel-wrapper">
         <h2>실제 영역 (읽기 전용)</h2>
-        <div class="panel" id="real-area">
-          <div>
-            <h1>Hello</h1>
-            <p style="color: blue">Virtual DOM Demo</p>
-            <ul>
-              <li>Item 1</li>
-              <li>Item 2</li>
-              <li>Item 3</li>
-            </ul>
-          </div>
-        </div>
+        <div class="panel" id="real-area"></div>
       </div>
       <div class="panel-wrapper">
         <h2>테스트 영역 (편집 가능)</h2>
@@ -194,10 +228,23 @@
     <div class="history-section">
       <h2>히스토리 스택</h2>
       <ul class="history-list" id="history-list"></ul>
-      <div class="history-compare" id="history-compare"></div>
     </div>
 
     <script type="module">
+      import {
+        NodeType,
+        applyPatches,
+        diff,
+        domToVdom,
+        elementNode,
+        renderTo,
+        textNode,
+      } from "/src/lib.js";
+      import {
+        formatSplitViewRows,
+        formatPatch,
+        formatPatchTitle,
+      } from "/src/ui-helper.js";
       import { createHistory } from "/src/history.js";
 
       const btnPatch = document.querySelector("#btn-patch");
@@ -206,236 +253,149 @@
       const realArea = document.querySelector("#real-area");
       const testArea = document.querySelector("#test-area");
       const historyList = document.querySelector("#history-list");
-      const historyCompare = document.querySelector("#history-compare");
       let openedHistoryIndex = null;
 
-      const initialMarkup = `
-        <div>
-          <h1>Hello</h1>
-          <p style="color: blue">Virtual DOM Demo</p>
-          <ul><li>Item 1</li><li>Item 2</li><li>Item 3</li></ul>
-        </div>
-      `.trim();
+      // 데모의 시작 화면을 실제 DOM 문자열이 아니라 vDOM 객체로 직접 만든다.
+      // elementNode / textNode를 조합해서 "초기 상태 스냅샷"을 구성한다.
+      const initialVdom = elementNode("div", {}, [
+        elementNode("h1", {}, [textNode("Hello")]),
+        elementNode("p", { style: "color: blue" }, [textNode("Virtual DOM Demo")]),
+        elementNode("ul", {}, [
+          elementNode("li", {}, [textNode("Item 1")]),
+          elementNode("li", {}, [textNode("Item 2")]),
+          elementNode("li", {}, [textNode("Item 3")]),
+        ]),
+      ]);
 
-      function normalizeMarkup(markup) {
-        return markup.trim();
+      let history = createHistory(createSnapshot(initialVdom));
+
+      function normalizeText(value) {
+        return String(value ?? "").replace(/\s+/g, " ").trim();
       }
 
-      function createSnapshot(html) {
-        const template = document.createElement("template");
-        template.innerHTML = html;
-
-        const title =
-          template.content.querySelector("h1, h2, h3, p, li")?.textContent?.trim() || "Snapshot";
-
-        return { html, title };
-      }
-
-      let history = createHistory(createSnapshot(initialMarkup));
-
-      function syncAreas(snapshot, updateEditor = true) {
-        realArea.innerHTML = snapshot.html;
-
-        if (updateEditor) {
-          testArea.innerHTML = snapshot.html;
+      function findTitleText(vnode) {
+        if (!vnode) {
+          return "";
         }
+
+        if (vnode.nodeType === NodeType.TEXT) {
+          return normalizeText(vnode.value);
+        }
+
+        for (const child of vnode.children ?? []) {
+          const result = findTitleText(child);
+
+          if (result) {
+            return result;
+          }
+        }
+
+        return "";
       }
 
-      function getVisibleNodes(node) {
-        return Array.from(node.childNodes).filter((child) => {
-          return child.nodeType === Node.ELEMENT_NODE || child.textContent.trim();
+      // 히스토리에 넣는 단위는 "제목 + vDOM" 형태의 스냅샷이다.
+      // 실제 비교와 렌더링은 html 문자열이 아니라 이 vDOM 값을 기준으로 수행한다.
+      function createSnapshot(vdom) {
+        const title = findTitleText(vdom) || vdom?.type || "Snapshot";
+        return { title, vdom };
+      }
+
+      function getEditableRootNode() {
+        return Array.from(testArea.childNodes).find((node) => {
+          return node.nodeType === Node.ELEMENT_NODE || normalizeText(node.textContent);
         });
       }
 
-      function describeNode(node) {
-        if (node.nodeType === Node.TEXT_NODE) {
-          return `"${node.textContent.replace(/\s+/g, " ").trim()}"`;
+      // 편집 가능한 영역은 contenteditable DOM이므로,
+      // 패널 안의 실제 첫 루트 노드를 읽어서 domToVdom으로 다시 vDOM 스냅샷으로 변환한다.
+      // 여기서 innerHTML을 임시 div로 다시 감싸면 div 루트가 한 겹 더 생긴다.
+      function readEditorSnapshot() {
+        const rootNode = getEditableRootNode();
+
+        if (!rootNode) {
+          return createSnapshot(elementNode("div", {}, []));
         }
 
-        const attrs = Array.from(node.attributes)
-          .map((attribute) => `${attribute.name}="${attribute.value}"`)
-          .join(" ");
-
-        return attrs
-          ? `<${node.tagName.toLowerCase()} ${attrs}>`
-          : `<${node.tagName.toLowerCase()}>`;
+        return createSnapshot(domToVdom(rootNode));
       }
 
-      function appendTreeLines(node, prefix, isLast, lines) {
-        const connector = isLast ? "└─ " : "├─ ";
-        lines.push(`${prefix}${connector}${describeNode(node)}`);
+      function renderSnapshotToEditor(snapshot) {
+        renderTo(testArea, snapshot.vdom);
+      }
 
-        if (node.nodeType !== Node.ELEMENT_NODE) {
+      function renderSnapshotToRealArea(snapshot) {
+        renderTo(realArea, snapshot.vdom);
+      }
+
+      function applySnapshotToRealArea(previousSnapshot, nextSnapshot) {
+        const currentRootDom = realArea.firstChild;
+
+        if (!currentRootDom) {
+          renderSnapshotToRealArea(nextSnapshot);
           return;
         }
 
-        const children = getVisibleNodes(node);
-        const nextPrefix = `${prefix}${isLast ? "   " : "│  "}`;
+        const patches = diff(previousSnapshot.vdom, nextSnapshot.vdom);
 
-        children.forEach((child, index) => {
-          appendTreeLines(child, nextPrefix, index === children.length - 1, lines);
-        });
+        if (patches.length === 0) {
+          return;
+        }
+
+        const nextRootDom = applyPatches(currentRootDom, patches);
+
+        if (nextRootDom === null) {
+          renderSnapshotToRealArea(nextSnapshot);
+        }
       }
 
-      function htmlToTreeLines(html) {
-        const template = document.createElement("template");
-        template.innerHTML = html;
-
-        const roots = getVisibleNodes(template.content);
-
-        if (roots.length === 0) {
-          return ["(empty)"];
-        }
-
-        const lines = [];
-
-        roots.forEach((root, index) => {
-          appendTreeLines(root, "", index === roots.length - 1, lines);
-        });
-
-        return lines;
-      }
-
-      function diffLines(previousLines, currentLines) {
-        const dp = Array.from({ length: previousLines.length + 1 }, () =>
-          Array(currentLines.length + 1).fill(0),
-        );
-
-        for (let i = previousLines.length - 1; i >= 0; i -= 1) {
-          for (let j = currentLines.length - 1; j >= 0; j -= 1) {
-            if (previousLines[i] === currentLines[j]) {
-              dp[i][j] = dp[i + 1][j + 1] + 1;
-            } else {
-              dp[i][j] = Math.max(dp[i + 1][j], dp[i][j + 1]);
-            }
-          }
-        }
-
-        const previousAnnotated = [];
-        const currentAnnotated = [];
-        let i = 0;
-        let j = 0;
-
-        while (i < previousLines.length && j < currentLines.length) {
-          if (previousLines[i] === currentLines[j]) {
-            previousAnnotated.push({ type: "same", line: previousLines[i] });
-            currentAnnotated.push({ type: "same", line: currentLines[j] });
-            i += 1;
-            j += 1;
-          } else if (dp[i + 1][j] >= dp[i][j + 1]) {
-            previousAnnotated.push({ type: "removed", line: previousLines[i] });
-            i += 1;
-          } else {
-            currentAnnotated.push({ type: "added", line: currentLines[j] });
-            j += 1;
-          }
-        }
-
-        while (i < previousLines.length) {
-          previousAnnotated.push({ type: "removed", line: previousLines[i] });
-          i += 1;
-        }
-
-        while (j < currentLines.length) {
-          currentAnnotated.push({ type: "added", line: currentLines[j] });
-          j += 1;
-        }
-
-        return { previousAnnotated, currentAnnotated };
-      }
-
-      function createCodeBlock(lines, emptyMessage) {
+      function createCodeBlock(lines) {
         const pre = document.createElement("pre");
         pre.className = "code-block";
-
-        if (lines.length === 0) {
-          const line = document.createElement("span");
-          line.className = "code-line placeholder";
-          line.textContent = emptyMessage;
-          pre.append(line);
-          return pre;
-        }
-
-        lines.forEach(({ type, line }) => {
+        lines.forEach(({ text, type }) => {
           const row = document.createElement("span");
-          const prefix = type === "added" ? "+ " : type === "removed" ? "- " : "  ";
-          row.className = type === "same" ? "code-line" : `code-line ${type}`;
-          row.textContent = `${prefix}${line}`;
+          row.className = type ? `code-line ${type}` : "code-line";
+          row.textContent = text;
           pre.append(row);
         });
 
         return pre;
       }
 
-      function sanitizeOpenedHistoryIndex(length) {
-        if (openedHistoryIndex !== null && openedHistoryIndex >= length) {
-          openedHistoryIndex = null;
-        }
+      function createRawCodeBlock(text) {
+        return createCodeBlock(
+          String(text).split("\n").map((line) => ({
+            text: line,
+            type: "",
+          })),
+        );
       }
 
-      function renderComparisons(entries, activeIndex) {
-        sanitizeOpenedHistoryIndex(entries.length);
-        historyCompare.innerHTML = "";
-
-        if (openedHistoryIndex === null) {
-          return;
+      function getHistoryPatches(entries, index) {
+        if (index === 0) {
+          return [];
         }
 
-        const index = openedHistoryIndex;
-        const currentEntry = entries[index];
-        const previousEntry = index > 0 ? entries[index - 1] : null;
-        const previousLines = previousEntry ? htmlToTreeLines(previousEntry.html) : [];
-        const currentLines = htmlToTreeLines(currentEntry.html);
-        const { previousAnnotated, currentAnnotated } = diffLines(previousLines, currentLines);
-        const changeCount =
-          previousAnnotated.filter((line) => line.type === "removed").length +
-          currentAnnotated.filter((line) => line.type === "added").length;
-
-        const card = document.createElement("section");
-        card.className = "compare-card";
-
-        const title = document.createElement("h3");
-        title.textContent = `${index + 1}. ${currentEntry.title}${
-          index === activeIndex ? " (현재 상태)" : ""
-        }`;
-        card.append(title);
-
-        const summary = document.createElement("p");
-        summary.className = "compare-summary";
-        summary.textContent =
-          index === 0
-            ? `초기 스냅샷입니다. 현재 트리의 모든 라인이 추가 상태로 표시됩니다.`
-            : `직전 스냅샷 대비 ${changeCount}개 변경 라인을 표시합니다.`;
-        card.append(summary);
-
-        const columns = document.createElement("div");
-        columns.className = "compare-columns";
-
-        const previousPane = document.createElement("div");
-        previousPane.className = "compare-pane";
-        previousPane.innerHTML = `<h4>${index === 0 ? "이전 상태 없음" : "이전 상태"}</h4>`;
-        previousPane.append(
-          createCodeBlock(previousAnnotated, index === 0 ? "(initial)" : "(no previous lines)"),
-        );
-
-        const currentPane = document.createElement("div");
-        currentPane.className = "compare-pane";
-        currentPane.innerHTML = "<h4>현재 상태</h4>";
-        currentPane.append(createCodeBlock(currentAnnotated, "(empty)"));
-
-        columns.append(previousPane, currentPane);
-        card.append(columns);
-        historyCompare.append(card);
+        return diff(entries[index - 1].vdom, entries[index].vdom);
       }
 
       function renderHistory() {
         const entries = history.entries();
         const activeIndex = history.currentIndex();
-        const displayEntries = entries.map((entry, index) => ({ entry, index })).reverse();
+        const displayEntries = entries
+          .map((entry, index) => ({ entry, index }))
+          .filter(({ index }) => index > 0)
+          .reverse();
+
+        if (
+          openedHistoryIndex !== null &&
+          (openedHistoryIndex < 1 || !entries[openedHistoryIndex])
+        ) {
+          openedHistoryIndex = null;
+        }
 
         historyList.innerHTML = "";
 
-        displayEntries.forEach(({ entry, index }) => {
+        displayEntries.forEach(({ entry, index }, displayIndex) => {
           const item = document.createElement("li");
           const button = document.createElement("button");
           const isOpen = openedHistoryIndex === index;
@@ -453,20 +413,76 @@
           }
 
           button.innerHTML = `
-            <span>${index + 1}. ${entry.title}</span>
-            <span class="history-meta">${isOpen ? "접기" : "비교 열기"}</span>
+            <span>${displayEntries.length - displayIndex}. ${entry.title}</span>
+            <span class="history-meta">${isOpen ? "닫기" : "열기"}</span>
           `;
           button.addEventListener("click", () => {
             openedHistoryIndex = isOpen ? null : index;
-
             renderHistory();
           });
 
           item.append(button);
+
+          if (isOpen) {
+            const panel = document.createElement("div");
+            panel.className = "history-panel";
+            const patches = getHistoryPatches(entries, index);
+            const splitRows = formatSplitViewRows(
+              index > 0 ? entries[index - 1].vdom : null,
+              entry.vdom,
+            );
+            const splitView = document.createElement("div");
+            splitView.className = "split-view";
+            splitView.innerHTML = `
+              <div class="split-head">
+                <div>이전 상태</div>
+                <div>현재 상태</div>
+              </div>
+            `;
+
+            splitRows.forEach((row) => {
+              const splitRow = document.createElement("div");
+              splitRow.className = "split-row";
+
+              const leftCell = document.createElement("div");
+              leftCell.className = row.left.type
+                ? `split-cell ${row.left.type}`
+                : "split-cell";
+              leftCell.textContent = row.left.text;
+
+              const rightCell = document.createElement("div");
+              rightCell.className = row.right.type
+                ? `split-cell ${row.right.type}`
+                : "split-cell";
+              rightCell.textContent = row.right.text;
+
+              splitRow.append(leftCell, rightCell);
+              splitView.append(splitRow);
+            });
+
+            panel.append(splitView);
+            const patchList = document.createElement("div");
+            patchList.className = "patch-list";
+
+            patches.forEach((patch, patchIndex) => {
+              const details = document.createElement("details");
+              details.className = "patch-accordion";
+
+              const summary = document.createElement("summary");
+              summary.className = "patch-summary";
+              summary.textContent = formatPatchTitle(patch, patchIndex);
+
+              details.append(summary, createRawCodeBlock(formatPatch(patch)));
+              patchList.append(details);
+            });
+
+            panel.append(patchList);
+            item.append(panel);
+          }
+
           historyList.append(item);
         });
 
-        renderComparisons(entries, activeIndex);
         btnBack.disabled = !history.canBack();
         btnForward.disabled = !history.canForward();
       }
@@ -474,31 +490,55 @@
       function renderCurrent(updateEditor = true) {
         const current = history.current();
 
-        syncAreas(current, updateEditor);
+        renderSnapshotToRealArea(current);
+
+        if (updateEditor) {
+          renderSnapshotToEditor(current);
+        }
+
         renderHistory();
       }
 
       btnPatch.addEventListener("click", () => {
-        const html = normalizeMarkup(testArea.innerHTML);
-        const current = history.current();
+        const currentSnapshot = history.current();
+        const nextSnapshot = readEditorSnapshot();
+        const patches = diff(currentSnapshot.vdom, nextSnapshot.vdom);
 
-        if (html === current.html) {
-          renderCurrent(false);
+        if (patches.length === 0) {
+          renderHistory();
           return;
         }
 
-        history.push(createSnapshot(html));
-        renderCurrent(false);
+        applySnapshotToRealArea(currentSnapshot, nextSnapshot);
+        history.push(nextSnapshot);
+        renderSnapshotToEditor(nextSnapshot);
+        renderHistory();
       });
 
       btnBack.addEventListener("click", () => {
-        history.back();
-        renderCurrent();
+        const currentSnapshot = history.current();
+        const previousSnapshot = history.back();
+
+        if (!previousSnapshot) {
+          return;
+        }
+
+        applySnapshotToRealArea(currentSnapshot, previousSnapshot);
+        renderSnapshotToEditor(previousSnapshot);
+        renderHistory();
       });
 
       btnForward.addEventListener("click", () => {
-        history.forward();
-        renderCurrent();
+        const currentSnapshot = history.current();
+        const nextSnapshot = history.forward();
+
+        if (!nextSnapshot) {
+          return;
+        }
+
+        applySnapshotToRealArea(currentSnapshot, nextSnapshot);
+        renderSnapshotToEditor(nextSnapshot);
+        renderHistory();
       });
 
       renderCurrent();
