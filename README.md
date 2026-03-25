@@ -13,8 +13,13 @@
 - 테스트 범위: DOM-VDOM 변환, 변경 사항 계산, patch 적용, 렌더링, history 관리
 - 검증 포인트: 루트 교체, 잘못된 입력 처리, 엣지 케이스, undo/redo 흐름
 
-![[Pasted image 20260326002841.png|579]]
-*기능 테스트 결과 화면*
+<br/>
+<br/>
+
+### 기능 테스트 결과 화면
+<img width="826" height="736" alt="image" src="https://github.com/user-attachments/assets/e834d105-8bea-4135-a412-0837d94acf20" />
+
+
 
 ## 협업 방식
 
@@ -23,9 +28,25 @@
 - 이진혁: `diff`, `applyPatches`
 - 양시준: `createHistory`, 데모 UI, 전체 통합
 
-![[Pasted image 20260326003730.png]]
-*브랜치와 PR 기반 협업 흐름![[Pasted image 20260326003844.png|523]]*
-![[Pasted image 20260326003827.png|516]]
+
+
+<br/>
+<br/>
+
+### 브랜치와 PR 기반 협업 흐름
+<img width="4320" height="2328" alt="image" src="https://github.com/user-attachments/assets/1ead4ce6-22e6-45f3-8c2f-1a9034470a91" />
+
+
+
+<br/>
+<br/>
+
+### git 이슈 생성 스킬
+<img width="1504" height="546" alt="image" src="https://github.com/user-attachments/assets/47f94957-95b8-46d1-a492-ff348044a11f" />
+<img width="1504" height="576" alt="image" src="https://github.com/user-attachments/assets/1f02c1cd-0fbd-4e5e-8314-498b3dc64468" />
+<img width="1265" height="870" alt="image" src="https://github.com/user-attachments/assets/41c47bec-189f-4904-b492-dff079816d49" />
+
+
 
 ## 데모 및 결과 확인
 
