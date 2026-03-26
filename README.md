@@ -34,6 +34,8 @@
 <br/>
 
 ### 브랜치와 PR 기반 협업 흐름
+<img width="1440" height="1050" alt="image" src="https://github.com/user-attachments/assets/d9cb1806-d6ed-492e-8f3f-2ee4fc561119" />
+
 <img width="4320" height="2328" alt="image" src="https://github.com/user-attachments/assets/1ead4ce6-22e6-45f3-8c2f-1a9034470a91" />
 
 
