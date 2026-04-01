@@ -1,106 +1,168 @@
-
-
 # Baby React
 
-React의 핵심 개념인 **Component, State, Hooks, Virtual DOM Diff/Patch**를 직접 구현하고, 그 위에 **이모지 반응 보드 데모**를 만든 프로젝트입니다.
+## 우리가 이 과제를 구현한 방식
 
-## 한눈에 보기
+**기존 Virtual DOM 엔진 위에, 루트 컴포넌트 하나가 Hook과 State를 관리하는 React-like runtime을 만들었습니다.**
 
-| 질문 | 답 |
-| --- | --- |
-| 무엇을 만들었나? | React-like runtime + 동작하는 demo app |
-| 핵심 제약은? | Hook은 루트에서만 사용, 자식은 props-only |
-| 상태는 어디 있나? | 루트 컴포넌트에 집중 |
-| 상태가 바뀌면? | 새 Virtual DOM 생성 -> Diff -> Patch |
-| 차별점은? | Debug Panel로 렌더/패치 흐름까지 시각화 |
+이 README는 "React가 무엇인가"보다 **"우리 팀이 어떤 선택으로 이 과제를 구현했는가"**를 빠르게 보여주기 위한 발표용 요약본입니다.
 
-## 구조
+---
+
+## 우리 팀의 핵심 선택
+
+| 선택 포인트 | 우리 구현 | 왜 이렇게 했는가 |
+| --- | --- | --- |
+| 컴포넌트 구조 | 루트 + props-only 자식 | 상태는 한곳에 두고 화면 책임만 분리하기 위해 |
+| 상태 위치 | 루트 컴포넌트에 집중 | Hook은 루트에서만 사용한다는 과제 조건을 가장 분명하게 만족하기 위해 |
+| Hook 저장 | `hooks[] + hookIndex` | Hook 순서 기반 상태 보존을 가장 작고 직관적으로 보여주기 위해 |
+| 상태 변경 처리 | `setState -> scheduleUpdate()` | 상태 변경과 화면 갱신을 자동으로 연결하기 위해 |
+| batching | `queueMicrotask()` | 같은 tick의 여러 상태 변경을 1번 렌더로 묶기 위해 |
+| 화면 업데이트 | Diff 후 Patch | 전체를 다시 그리지 않고 필요한 부분만 바꾸기 위해 |
+| 디버깅 | Debug Panel 추가 | 렌더/패치 흐름까지 눈으로 보여주기 위해 |
+
+---
+
+## 우리 구조
+
+```mermaid
+graph TD
+    A["Root: EmojiReactionBoardApp"] --> B["State 관리"]
+    A --> C["Event 처리"]
+    A --> D["Props 전달"]
+    D --> E["TopNavBar"]
+    D --> F["MetricsCards"]
+    D --> G["EmojiBoardSection"]
+    D --> H["RecentActivity"]
+    D --> I["SidebarPersistenceControls"]
+    J["DebugPanelApp"] --> K["Action Log"]
+    J --> L["Render Trace"]
+    J --> M["Patch Summary"]
+```
+
+핵심은 단순합니다.
+
+- 루트 컴포넌트가 상태와 이벤트를 모두 가집니다.
+- 자식 컴포넌트는 `props`만 받아서 화면만 그립니다.
+- 디버그 패널은 별도 루트로 두어 내부 동작을 따로 보여줍니다.
+
+---
+
+## 우리 런타임이 동작하는 방식
 
 ```mermaid
 flowchart LR
     A["User Action"] --> B["setState"]
-    B --> C["hooks[] update"]
+    B --> C["hooks[] 값 갱신"]
     C --> D["scheduleUpdate()"]
-    D --> E["Root Component rerender"]
-    E --> F["New Virtual DOM"]
+    D --> E["Root rerender"]
+    E --> F["새 Virtual DOM"]
     F --> G["diff(old, new)"]
     G --> H["applyPatches()"]
     H --> I["Changed DOM only"]
 ```
 
-## 구현 포인트
+이 흐름에서 우리가 강조하는 포인트는 3개입니다.
 
-```mermaid
-graph TD
-    A["FunctionComponent"] --> B["hooks[]"]
-    A --> C["mount() / update()"]
-    B --> D["useState"]
-    B --> E["useEffect"]
-    B --> F["useMemo"]
-    C --> G["diff"]
-    C --> H["applyPatches"]
-    A --> I["Debug Snapshot"]
-```
+1. 상태는 `FunctionComponent` 인스턴스의 `hooks[]` 배열에 남습니다.
+2. `setState`는 값만 바꾸는 것이 아니라 update를 예약합니다.
+3. update는 새 Virtual DOM을 만든 뒤 Diff/Patch로 최소 반영합니다.
 
-| 항목 | 구현 방식 | 의미 |
-| --- | --- | --- |
-| Component | 함수형 컴포넌트 + `COMPONENT_NODE` | 컴포넌트도 vnode로 관리 |
-| State | 루트 컴포넌트의 `hooks[]` 배열 | 함수가 다시 실행돼도 상태 유지 |
-| Hooks | `useState`, `useEffect`, `useMemo` | React 핵심 기능 직접 구현 |
-| Rendering | `mount()` 후 `update()`에서 Diff/Patch | 전체 DOM 재생성 방지 |
-| Batching | `queueMicrotask()` | 여러 `setState`를 1번 렌더로 묶음 |
+---
 
-## UI 설계
+## 왜 이런 선택을 했는가
 
-```mermaid
-graph TD
-    A["EmojiReactionBoardApp (root state)"]
-    A --> B["TopNavBar"]
-    A --> C["MetricsCards"]
-    A --> D["EmojiBoardSection"]
-    A --> E["RecentActivity"]
-    A --> F["SidebarPersistenceControls"]
-    G["DebugPanelApp"] --> H["Action Log"]
-    G --> I["Render Trace"]
-    G --> J["Patch Summary"]
-```
+### 상태를 왜 루트에 몰았나?
 
-- 루트 컴포넌트가 상태와 이벤트를 관리합니다.
-- 자식 컴포넌트는 `props`만 받아 렌더링합니다.
-- 과제의 **Lifting State Up** 요구사항을 그대로 반영했습니다.
+- 과제 조건이 "Hook은 루트에서만 사용"이었기 때문입니다.
+- 동시에 **Lifting State Up**을 가장 분명하게 보여줄 수 있습니다.
+- 데이터 흐름이 단방향이라 발표에서 설명하기 쉽습니다.
 
-## 데모에서 보이는 것
+다른 방식:
 
-| 사용자 행동 | 화면 변화 | 설명 포인트 |
-| --- | --- | --- |
-| 이모지 클릭 | 투표 수, 1위 반응, 최근 활동 변경 | 루트 상태 갱신 |
-| Save | 브라우저 저장소 저장 | `useEffect`/상태 관리 |
-| Reset | 라이브 상태 초기화 | 재렌더 확인 |
-| Restore | 저장 상태 복원 | 상태 복구 흐름 |
-| Debug Panel 확인 | 액션, 렌더 추적, 패치 요약 표시 | 내부 동작 시각화 |
+- 공통 부모별로 상태를 나누기
+- 전역 store 사용
+- 자식 컴포넌트도 local state 허용
 
-## 왜 이런 구조를 선택했나?
+### Hook을 왜 `hooks[] + hookIndex`로 구현했나?
 
-| 선택 요소 | 현재 구현 | 선택 이유 | 다른 방식 |
-| --- | --- | --- | --- |
-| 컴포넌트 구조 | 루트 + props-only 자식 | 상태는 한곳에 두고 화면 책임은 분리하기 위해 | 자식도 독립 state 보유 |
-| 상태 위치 | 루트에 집중 | 루트 Hook 제약과 Lifting State Up을 명확히 보여주기 위해 | 공통 부모별 분산, 전역 store |
-| Hook 저장 | `hooks[] + hookIndex` | Hook 순서 기반 상태 보존을 가장 작게 설명할 수 있어서 | `Map`, 타입별 배열, linked list |
-| 상태 변경 처리 | `setState -> scheduleUpdate()` | 상태 변경과 화면 갱신을 자동 연결하기 위해 | `setState -> 즉시 update()` |
-| batching | `queueMicrotask()` | 같은 tick의 여러 변경을 1회 렌더로 묶기 쉬워서 | `setTimeout`, `requestAnimationFrame`, 전역 큐 |
-| 렌더 업데이트 | Diff 후 Patch | 전체 재렌더 대신 필요한 부분만 바뀌게 하기 위해 | subtree 교체, 전체 DOM 재생성 |
+- Hook의 핵심은 "호출 순서 기반 상태 보존"이기 때문입니다.
+- 배열과 인덱스만으로도 그 원리를 가장 작게 구현할 수 있습니다.
+- 교육용 설명력이 높습니다.
+
+다른 방식:
+
+- `Map` 기반 저장
+- state/effect/memo 별도 배열
+- linked list 구조
+
+### 왜 batching을 넣었나?
+
+- 버튼 클릭 한 번에 여러 상태가 바뀌어도 렌더는 한 번만 일어나게 하기 위해서입니다.
+- React의 batching 개념을 가장 간단하게 재현할 수 있습니다.
+
+다른 방식:
+
+- 즉시 `update()`
+- `setTimeout`
+- `requestAnimationFrame`
+- 전역 스케줄러
+
+### 왜 Diff/Patch를 유지했나?
+
+- 과제 목표가 "전체를 다시 그리지 않고 필요한 부분만 업데이트"였기 때문입니다.
+- 기존 Virtual DOM 엔진을 그대로 활용할 수 있습니다.
+- 상태 변경과 DOM 최소 수정의 연결을 직접 보여줄 수 있습니다.
+
+다른 방식:
+
+- 매 상태 변경마다 전체 DOM 재생성
+- subtree 단위 교체
+
+---
+
+## 데모에서 보여주는 것
+
+| 데모 행동 | 우리가 보여주려는 것 |
+| --- | --- |
+| 이모지 클릭 | 루트 상태 변경 -> 여러 UI 동시 갱신 |
+| Save | 상태를 브라우저 저장소에 저장 |
+| Reset | 현재 라이브 상태만 초기화 |
+| Restore | 저장된 상태를 다시 복원 |
+| Debug Panel 확인 | 액션, 렌더 추적, patch 요약 시각화 |
+
+즉, 이 데모는 예쁜 화면 자체보다 **우리 런타임이 실제로 동작한다는 증거**입니다.
+
+---
 
 ## 우리 구현 vs 실제 React
 
 | 항목 | 우리 구현 | 실제 React |
 | --- | --- | --- |
-| Hook 사용 범위 | 루트만 허용 | 모든 함수형 컴포넌트 |
-| 상태 저장 | `hooks[]` 배열 | Fiber 기반 구조 |
-| batching | 단순 microtask | 더 정교한 scheduler |
-| diff | 단순 트리 비교 + 일부 keyed diff | 고도화된 reconciliation |
-| concurrent rendering | 없음 | 있음 |
+| 상태 단위 | 루트 FunctionComponent 하나 | 각 함수 컴포넌트마다 독립 상태 |
+| Hook 사용 위치 | 루트만 허용 | 모든 함수형 컴포넌트 |
+| 상태 저장 | `hooks[]` 배열 | Fiber 기반 Hook 구조 |
+| batching | `queueMicrotask` 기반 | 더 정교한 scheduler |
+| 렌더 비교 | vDOM diff 후 patch | Fiber reconciliation |
+| 리스트 처리 | 단순 비교 중심, 일부 keyed diff | 강한 key 기반 reconciliation |
+| effect 실행 | patch 직후 flush | 더 정교한 렌더/커밋 단계 분리 |
 
-## 한 줄 정리
+우리는 실제 React를 완전히 복제하지 않았습니다. 대신 아래를 가장 설명하기 쉬운 형태로 압축했습니다.
 
-이 프로젝트는 실제 React를 완전히 복제하려는 것이 아니라, **상태 보존, Hook 순서, batching, Diff/Patch, Lifting State Up**을 가장 설명하기 쉬운 형태로 압축 구현한 결과물입니다.
+- 상태 보존
+- Hook 순서
+- batching
+- Diff/Patch
+- Lifting State Up
 
+---
+
+## 발표용 한 줄 정리
+
+> **"우리는 React를 그대로 만든 것이 아니라, React의 핵심 동작 원리를 가장 설명하기 쉬운 구조로 구현했다."**
+
+---
+
+## 더 보기
+
+- 발표자용 자료: [docs/presenter-guide.md](/Users/hi/Library/CloudStorage/Dropbox/Mac/Desktop/Jungle/baby-react_260401/docs/presenter-guide.md)
+- 3분 30초 발표 스크립트: [docs/presentation-script-3m30s.md](/Users/hi/Library/CloudStorage/Dropbox/Mac/Desktop/Jungle/baby-react_260401/docs/presentation-script-3m30s.md)
