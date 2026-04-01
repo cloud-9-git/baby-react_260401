@@ -1,6 +1,7 @@
 export const NodeType = Object.freeze({
   TEXT: "TEXT_NODE",
   ELEMENT: "ELEMENT_NODE",
+  COMPONENT: "COMPONENT_NODE",
 });
 
 /**
@@ -15,6 +16,10 @@ export function textNode(value) {
  */
 export function elementNode(type, props = {}, children = [], key = null) {
   return { nodeType: NodeType.ELEMENT, type, props, children, key: key ?? null };
+}
+
+export function componentNode(component, props = {}, key = null) {
+  return { nodeType: NodeType.COMPONENT, component, props, key: key ?? null };
 }
 
 export const PatchType = Object.freeze({
