@@ -9,8 +9,8 @@ export function PatchSummaryPanel({ items }) {
       className: "panel-card debug-card",
       "data-role": "patch-summary-panel",
     },
-    h("div", { className: "debug-card-head" }, h("h2", {}, "패치 요약 패널")),
-    renderList(items, "기록된 패치가 없습니다", "patch-summary-list"),
+    h("div", { className: "debug-card-head" }, h("h2", {}, "Patch Summary Panel")),
+    renderList(items, "No patches recorded", "patch-summary-list"),
   );
 }
 

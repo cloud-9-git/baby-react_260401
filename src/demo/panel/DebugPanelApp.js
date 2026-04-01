@@ -10,9 +10,9 @@ import { RenderTracePanel } from "./components/RenderTracePanel.js";
 
 const h = createElement;
 const DEBUG_TABS = [
-  { id: "action", label: "액션 로그" },
-  { id: "render", label: "렌더 추적" },
-  { id: "patch", label: "패치 요약" },
+  { id: "action", label: "Action Log" },
+  { id: "render", label: "Render Trace" },
+  { id: "patch", label: "Patch Summary" },
 ];
 
 export function DebugPanelApp({ debugTarget }) {
@@ -41,32 +41,32 @@ export function DebugPanelApp({ debugTarget }) {
       {
         className: "panel-card debug-panel-hero",
       },
-      h("p", { className: "eyebrow" }, "런타임 디버그 패널"),
-      h("h1", { className: "debug-title" }, "렌더와 패치 활동"),
+      h("p", { className: "eyebrow" }, "Runtime Debug Panel"),
+      h("h1", { className: "debug-title" }, "Render and Patch Activity"),
       h(
         "p",
         { className: "muted debug-subtitle" },
-        "공개 debug snapshot API만 구독해서 마지막 액션, 렌더 흐름, patch 요약을 터미널처럼 추적합니다.",
+        "Subscribe to the public debug snapshot API to inspect the latest action, render trace, and patch summary.",
       ),
       h(
         "div",
         { className: "debug-metrics", "data-role": "debug-metrics" },
         h(DebugMetricCard, {
-          label: "렌더 횟수",
+          label: "Render Count",
           value: String(model.renderCount),
         }),
         h(DebugMetricCard, {
-          label: "마운트됨",
-          value: model.isMounted ? "예" : "아니오",
+          label: "Mounted",
+          value: model.isMounted ? "Yes" : "No",
         }),
         h(DebugMetricCard, {
-          label: "업데이트 예약",
-          value: model.isUpdateScheduled ? "예" : "아니오",
+          label: "Update Scheduled",
+          value: model.isUpdateScheduled ? "Yes" : "No",
         }),
       ),
       h(
         "div",
-        { className: "debug-tab-list", role: "tablist", "aria-label": "디버그 패널 섹션" },
+        { className: "debug-tab-list", role: "tablist", "aria-label": "Debug panel sections" },
         ...DEBUG_TABS.map((tab) =>
           h(
             "button",
