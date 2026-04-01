@@ -1,4 +1,16 @@
 const listenerStoreKey = Symbol("listenerStore");
+let currentDebugOwner = null;
+
+export function withDebugOwner(owner, callback) {
+  const previousOwner = currentDebugOwner;
+  currentDebugOwner = owner;
+
+  try {
+    return callback();
+  } finally {
+    currentDebugOwner = previousOwner;
+  }
+}
 
 export function setDomProp(element, key, value) {
   const normalizedKey = key === "class" ? "className" : key;
@@ -76,9 +88,17 @@ function setEventProp(element, key, handler) {
   }
 
   const store = element[listenerStoreKey] ?? (element[listenerStoreKey] = {});
+  const owner = currentDebugOwner;
+  const wrappedHandler =
+    owner && typeof owner.recordDebugAction === "function"
+      ? function debugWrappedHandler(event) {
+        owner.recordDebugAction(createDebugAction(getEventName(key), event));
+        return handler(event);
+      }
+      : handler;
 
-  element.addEventListener(getEventName(key), handler);
-  store[key] = handler;
+  element.addEventListener(getEventName(key), wrappedHandler);
+  store[key] = wrappedHandler;
 }
 
 function removeEventProp(element, key) {
@@ -91,4 +111,52 @@ function removeEventProp(element, key) {
 
   element.removeEventListener(getEventName(key), previousHandler);
   delete store[key];
+}
+
+function createDebugAction(eventName, event) {
+  const source = event?.currentTarget ?? event?.target ?? null;
+  const payload = {};
+
+  if (source?.dataset?.taskId) {
+    payload.taskId = source.dataset.taskId;
+  }
+
+  if (typeof source?.name === "string" && source.name !== "") {
+    payload.name = source.name;
+  }
+
+  if (
+    typeof source?.value === "string" &&
+    source.value !== "" &&
+    (eventName === "input" || eventName === "change")
+  ) {
+    payload.value = source.value;
+  }
+
+  if (source?.tagName) {
+    payload.tag = source.tagName.toLowerCase();
+  }
+
+  if (eventName === "click") {
+    const label = normalizeText(source?.textContent);
+
+    if (label) {
+      payload.label = label;
+    }
+  }
+
+  const actionType = source?.dataset?.action || eventName;
+
+  return {
+    type: actionType,
+    payload,
+  };
+}
+
+function normalizeText(value) {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  return value.trim().replace(/\s+/g, " ").slice(0, 80);
 }

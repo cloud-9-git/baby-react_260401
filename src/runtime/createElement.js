@@ -73,6 +73,10 @@ export function normalizeComponentResult(value) {
 function renderChildComponent(component, props) {
   const instance = getCurrentInstance();
 
+  if (instance && typeof instance.recordRenderTrace === "function") {
+    instance.recordRenderTrace(component, props);
+  }
+
   return withRenderContext(instance, "child", () => normalizeComponentResult(component(props)));
 }
 

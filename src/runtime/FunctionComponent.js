@@ -1,6 +1,13 @@
 import { applyPatches } from "../lib/applyPatches.js";
+import { withDebugOwner } from "../lib/domProps.js";
 import { diff } from "../lib/diff.js";
 import { renderTo } from "../lib/renderTo.js";
+import {
+  createEmptyDebugSnapshot,
+  normalizeDebugAction,
+  normalizeDebugSnapshot,
+  summarizePatches,
+} from "../debug/debugSnapshot.js";
 import { withRenderContext } from "./context.js";
 import { normalizeComponentResult } from "./createElement.js";
 
@@ -43,6 +50,11 @@ export class FunctionComponent {
     this.pendingEffects = [];             // 이번 렌더에서 실행 대기 중인 useEffect 목록
     this.isMounted = false;               // mount()가 완료되었는지
     this.isUpdateScheduled = false;       // 리렌더가 이미 예약되었는지 (중복 방지용)
+
+    this.debugListeners = new Set();
+    this.debugSnapshot = createEmptyDebugSnapshot();
+    this.pendingStateReasons = [];
+    this.currentRenderTrace = [];
   }
 
   /**
@@ -51,13 +63,20 @@ export class FunctionComponent {
    * 흐름: 컴포넌트 실행 → vdom 생성 → 실제 DOM으로 변환 → container에 삽입 → effect 실행
    */
   mount() {
-    const nextVdom = this.renderComponent();
+    const nextVdom = this.renderComponent(this.consumeRenderReason("initial mount"));
 
+    this.debugSnapshot.renderCount += 1;
     this.currentVdom = nextVdom;
-    renderTo(this.container, nextVdom);                // vdom → 실제 DOM으로 변환 후 container에 삽입
+    withDebugOwner(this, () => {
+      renderTo(this.container, nextVdom);              // vdom → 실제 DOM으로 변환 후 container에 삽입
+    });
     this.currentRootDom = this.container.firstChild ?? null;
     this.isMounted = true;
     this.flushEffects();                               // useEffect 콜백 실행
+    this.commitDebugSnapshot({
+      lastPatches: [],
+      renderTrace: this.currentRenderTrace,
+    });
 
     return this.currentRootDom;
   }
@@ -74,15 +93,22 @@ export class FunctionComponent {
     }
 
     const previousVdom = this.currentVdom;
-    const nextVdom = this.renderComponent();           // 컴포넌트 함수 다시 실행 → 새 vdom
+    const nextVdom = this.renderComponent(this.consumeRenderReason("update")); // 컴포넌트 함수 다시 실행 → 새 vdom
 
+    this.debugSnapshot.renderCount += 1;
     this.currentVdom = nextVdom;
 
     // 이전에 렌더된 DOM이 없으면 (예: 빈 텍스트였던 경우) 전체를 새로 그림
     if (!this.currentRootDom) {
-      renderTo(this.container, nextVdom);
+      withDebugOwner(this, () => {
+        renderTo(this.container, nextVdom);
+      });
       this.currentRootDom = this.container.firstChild ?? null;
       this.flushEffects();
+      this.commitDebugSnapshot({
+        lastPatches: [],
+        renderTrace: this.currentRenderTrace,
+      });
       return this.currentRootDom;
     }
 
@@ -91,11 +117,13 @@ export class FunctionComponent {
 
     if (patches.length > 0) {
       // 차이가 있으면 최소한의 DOM 조작만 수행
-      const nextRootDom = applyPatches(this.currentRootDom, patches);
+      const nextRootDom = withDebugOwner(this, () => applyPatches(this.currentRootDom, patches));
 
       if (nextRootDom === null) {
         // 루트 노드 자체가 교체된 경우 → 전체 다시 렌더
-        renderTo(this.container, nextVdom);
+        withDebugOwner(this, () => {
+          renderTo(this.container, nextVdom);
+        });
         this.currentRootDom = this.container.firstChild ?? null;
       } else {
         this.currentRootDom = nextRootDom;
@@ -103,6 +131,10 @@ export class FunctionComponent {
     }
 
     this.flushEffects();
+    this.commitDebugSnapshot({
+      lastPatches: summarizePatches(patches),
+      renderTrace: this.currentRenderTrace,
+    });
     return this.currentRootDom;
   }
 
@@ -157,6 +189,7 @@ export class FunctionComponent {
     }
 
     this.isUpdateScheduled = true;
+    this.commitDebugSnapshot();
 
     queueMicrotask(() => {
       this.isUpdateScheduled = false;
@@ -170,9 +203,15 @@ export class FunctionComponent {
    * hookIndex를 0으로 리셋 → 함수 실행 시 hook들이 순서대로 다시 0번부터 읽음
    * withRenderContext로 감싸서 hook들이 이 인스턴스(this)에 바인딩되도록 한다.
    */
-  renderComponent() {
+  renderComponent(reason = "render") {
     this.hookIndex = 0;
     this.pendingEffects = [];
+    this.currentRenderTrace = [
+      {
+        name: getComponentName(this.renderFn),
+        reason,
+      },
+    ];
 
     return withRenderContext(this, "root", () =>
       normalizeComponentResult(this.renderFn(this.props)),
@@ -208,4 +247,79 @@ export class FunctionComponent {
       hook.cleanup = typeof cleanup === "function" ? cleanup : null;
     }
   }
+
+  getDebugSnapshot() {
+    return normalizeDebugSnapshot({
+      ...this.debugSnapshot,
+      renderCount: this.debugSnapshot.renderCount,
+      isMounted: this.isMounted,
+      isUpdateScheduled: this.isUpdateScheduled,
+    });
+  }
+
+  subscribeDebug(listener) {
+    if (typeof listener !== "function") {
+      throw new TypeError("listener must be a function.");
+    }
+
+    this.debugListeners.add(listener);
+    return () => {
+      this.debugListeners.delete(listener);
+    };
+  }
+
+  recordDebugAction(action) {
+    this.debugSnapshot.lastAction = normalizeDebugAction(action);
+    this.emitDebugSnapshot();
+  }
+
+  recordRenderTrace(component, props = {}) {
+    this.currentRenderTrace.push({
+      name: getComponentName(component),
+      reason: this.isMounted ? "rendered with parent update" : "rendered on mount",
+      ...(typeof props.key === "string" && props.key.trim() !== "" ? { key: props.key.trim() } : {}),
+    });
+  }
+
+  recordStateUpdate(index) {
+    this.pendingStateReasons.push(`state[${index}] updated`);
+  }
+
+  commitDebugSnapshot(partialSnapshot = {}) {
+    this.debugSnapshot = normalizeDebugSnapshot({
+      ...this.debugSnapshot,
+      ...partialSnapshot,
+      renderCount: this.debugSnapshot.renderCount,
+      isMounted: this.isMounted,
+      isUpdateScheduled: this.isUpdateScheduled,
+    });
+    this.emitDebugSnapshot();
+    return this.debugSnapshot;
+  }
+
+  consumeRenderReason(fallbackReason) {
+    if (this.pendingStateReasons.length === 0) {
+      return fallbackReason;
+    }
+
+    const reason = [...new Set(this.pendingStateReasons)].join(", ");
+    this.pendingStateReasons = [];
+    return reason;
+  }
+
+  emitDebugSnapshot() {
+    const snapshot = this.getDebugSnapshot();
+
+    for (const listener of this.debugListeners) {
+      listener(snapshot);
+    }
+  }
+}
+
+function getComponentName(component) {
+  if (typeof component === "function" && component.name) {
+    return component.name;
+  }
+
+  return "Anonymous";
 }
