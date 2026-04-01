@@ -205,11 +205,11 @@ describe("FunctionComponent runtime", () => {
     );
   });
 
-  it("createElement는 key를 무시하고 원시 children을 vnode로 정규화한다", () => {
+  it("createElement는 key를 vnode 최상위에 두고 원시 children을 vnode로 정규화한다", () => {
     const vnode = createElement("li", { key: "ignore-me", "data-kind": "demo" }, "Task ", 1);
 
     expect(vnode).toEqual(
-      elementNode("li", { "data-kind": "demo" }, [textNode("Task "), textNode("1")]),
+      elementNode("li", { "data-kind": "demo" }, [textNode("Task "), textNode("1")], "ignore-me"),
     );
   });
 
