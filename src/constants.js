@@ -15,11 +15,11 @@ export function textNode(value) {
  * 담당: 위승철
  */
 export function elementNode(type, props = {}, children = [], key = null) {
-  return { nodeType: NodeType.ELEMENT, type, props, children, key };
+  return { nodeType: NodeType.ELEMENT, type, props, children, key: key ?? null };
 }
 
 export function componentNode(component, props = {}, key = null) {
-  return { nodeType: NodeType.COMPONENT, component, props, key };
+  return { nodeType: NodeType.COMPONENT, component, props, key: key ?? null };
 }
 
 export const PatchType = Object.freeze({

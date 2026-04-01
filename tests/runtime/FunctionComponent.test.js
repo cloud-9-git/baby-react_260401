@@ -257,8 +257,8 @@ describe("FunctionComponent runtime", () => {
       isMounted: true,
       isUpdateScheduled: false,
       lastPatches: [
-        { type: "TEXT", path: [0, 0], summary: "text -> 1" },
-        { type: "TEXT", path: [1, 0], summary: "text -> one" },
+        { type: "TEXT", path: [0, 0], summary: 'text -> "1"' },
+        { type: "TEXT", path: [1, 0], summary: 'text -> "one"' },
       ],
       renderTrace: [
         { name: "App", reason: "state[0] updated" },
@@ -305,7 +305,7 @@ describe("FunctionComponent runtime", () => {
       isMounted: true,
       isUpdateScheduled: false,
       lastPatches: [
-        { type: "TEXT", path: [0], summary: "text -> 1" },
+        { type: "TEXT", path: [0], summary: 'text -> "1"' },
       ],
       renderTrace: [
         { name: "App", reason: "state[0] updated" },

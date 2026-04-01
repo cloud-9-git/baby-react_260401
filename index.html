@@ -51,6 +51,18 @@
         padding: 40px 0 56px;
       }
 
+      .demo-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 2fr) minmax(320px, 0.95fr);
+        gap: 24px;
+        align-items: start;
+      }
+
+      [data-app-root],
+      [data-debug-root] {
+        min-width: 0;
+      }
+
       .board-shell {
         display: grid;
         gap: 20px;
@@ -338,6 +350,77 @@
         margin-top: 10px;
       }
 
+      .debug-panel-shell {
+        display: grid;
+        gap: 20px;
+        position: sticky;
+        top: 24px;
+      }
+
+      .debug-panel-hero,
+      .debug-card {
+        animation: float-up 520ms ease-out both;
+      }
+
+      .debug-title {
+        margin: 10px 0 12px;
+        font-size: clamp(28px, 3vw, 36px);
+        line-height: 1.05;
+        letter-spacing: -0.04em;
+      }
+
+      .debug-metrics {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 18px;
+      }
+
+      .debug-metric-card {
+        min-width: 0;
+      }
+
+      .debug-card-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .debug-emphasis {
+        font-size: 18px;
+        line-height: 1.45;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+
+      .debug-meta {
+        margin-bottom: 0;
+        color: var(--muted);
+      }
+
+      .debug-empty {
+        margin-bottom: 0;
+        color: var(--muted);
+      }
+
+      .debug-log-list {
+        display: grid;
+        gap: 10px;
+        margin: 0;
+        padding-left: 20px;
+      }
+
+      .debug-log-item {
+        color: var(--ink);
+      }
+
+      .debug-log-label {
+        display: inline-block;
+        line-height: 1.45;
+      }
+
       @keyframes float-up {
         from {
           opacity: 0;
@@ -351,9 +434,14 @@
       }
 
       @media (max-width: 960px) {
+        .demo-layout,
         .hero-stats,
         .board-grid {
           grid-template-columns: 1fr;
+        }
+
+        .debug-panel-shell {
+          position: static;
         }
       }
 
@@ -367,6 +455,10 @@
         .panel-card {
           padding: 18px;
           border-radius: 20px;
+        }
+
+        .debug-metrics {
+          grid-template-columns: 1fr;
         }
 
         .composer-grid,
@@ -388,7 +480,12 @@
     </style>
   </head>
   <body>
-    <div id="app" data-app-root></div>
+    <div id="app">
+      <div class="demo-layout">
+        <div data-app-root></div>
+        <div data-debug-root></div>
+      </div>
+    </div>
     <script type="module" src="/src/demo/main.js"></script>
   </body>
 </html>

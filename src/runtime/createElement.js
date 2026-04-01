@@ -13,7 +13,7 @@ import { NodeType, componentNode, elementNode, textNode } from "../constants.js"
  * @returns {object} vnode (Virtual DOM 노드)
  */
 export function createElement(type, props, ...children) {
-  const { normalizedProps, key, propChildren } = normalizeProps(props);
+  const { rest: normalizedProps, key: vnodeKey, propChildren } = splitProps(props);
 
   const normalizedChildren = normalizeChildren([
     ...propChildren,
@@ -21,14 +21,14 @@ export function createElement(type, props, ...children) {
   ]);
 
   if (typeof type === "function") {
-    return componentNode(type, { ...normalizedProps, children: normalizedChildren }, key);
+    return componentNode(type, { ...normalizedProps, children: normalizedChildren }, vnodeKey);
   }
 
   if (typeof type !== "string" || type.trim() === "") {
     throw new TypeError("Invalid component type.");
   }
 
-  return elementNode(type, normalizedProps, normalizedChildren, key);
+  return elementNode(type, normalizedProps, normalizedChildren, vnodeKey);
 }
 
 /**
@@ -65,24 +65,19 @@ export function normalizeComponentResult(value) {
  * - null이면 빈 객체로
  * - key, children은 vnode 트리 구성에만 쓰이므로 props에서 제거
  */
-function normalizeProps(props) {
+function splitProps(props) {
   if (props == null) {
-    return {
-      normalizedProps: {},
-      key: null,
-      propChildren: [],
-    };
+    return { rest: {}, key: null, propChildren: [] };
   }
 
   if (typeof props !== "object" || Array.isArray(props)) {
     throw new TypeError("Invalid props.");
   }
 
-  const { key = null, children: propChildrenValue, ...rest } = props;
-
+  const { key, children: propChildrenValue, ...rest } = props;
   return {
-    normalizedProps: rest,
-    key,
+    rest,
+    key: key ?? null,
     propChildren:
       Array.isArray(propChildrenValue)
         ? propChildrenValue
@@ -108,13 +103,6 @@ function normalizeChildren(children) {
 
 /**
  * 단일 child를 처리하여 target 배열에 추가한다.
- *
- * 처리 규칙:
- *   배열         → 재귀적으로 각 요소를 다시 처리 (중첩 배열 평탄화)
- *   null/boolean → 무시 (렌더링할 것이 없음)
- *   string/number → textNode로 변환 후 추가
- *   vnode 객체   → 그대로 추가
- *   그 외        → 에러
  */
 function appendChild(target, child) {
   if (Array.isArray(child)) {
@@ -142,10 +130,6 @@ function appendChild(target, child) {
   throw new TypeError("Invalid child vnode.");
 }
 
-/**
- * 값이 유효한 vnode인지 확인한다.
- * vnode = { nodeType: "TEXT_NODE" | "ELEMENT_NODE", ... } 형태의 객체
- */
 function isVnode(value) {
   return value !== null && typeof value === "object" && typeof value.nodeType === "string" &&
     (

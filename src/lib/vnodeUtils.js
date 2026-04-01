@@ -52,7 +52,7 @@ export function normalizeVnode(vnode) {
     type: vnode.type,
     props: normalizeProps(vnode.props ?? {}),
     children: (vnode.children ?? []).map(normalizeVnode),
-    key: vnode.key ?? null,
+    key: normalizeVnodeKey(vnode.key),
   };
 }
 
@@ -69,6 +69,10 @@ function isValidVnode(vnode) {
     return false;
   }
 
+  if (!isValidVnodeKey(vnode.key)) {
+    return false;
+  }
+
   if (typeof vnode.type !== "string" || vnode.type.trim() === "") {
     return false;
   }
@@ -82,4 +86,20 @@ function isValidVnode(vnode) {
   }
 
   return (vnode.children ?? []).every(isValidVnode);
+}
+
+function isValidVnodeKey(key) {
+  if (key === undefined || key === null) {
+    return true;
+  }
+
+  return typeof key === "string" || typeof key === "number";
+}
+
+function normalizeVnodeKey(key) {
+  if (key === undefined || key === null || key === "") {
+    return null;
+  }
+
+  return key;
 }

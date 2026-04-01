@@ -34,7 +34,9 @@ function resolveNode(vnode, instance) {
       throw new TypeError("Invalid component vnode.");
     }
 
-    instance?.trackComponentRender(component, vnode.key ?? null);
+    if (instance && typeof instance.recordRenderTrace === "function") {
+      instance.recordRenderTrace(component, { key: vnode.key });
+    }
 
     const nextVnode = withRenderContext(instance, "child", () =>
       normalizeComponentResult(component(vnode.props ?? {})),
