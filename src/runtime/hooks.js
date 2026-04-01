@@ -32,7 +32,7 @@ export function useState(initialValue) {
         }
 
         hook.value = resolvedValue;
-        instance.scheduleUpdate();
+        instance.scheduleUpdate(`state[${index}] updated`);
         return hook.value;
       },
     };
@@ -104,6 +104,14 @@ export function useMemo(factory, deps) {
   };
 
   return value;
+}
+
+export function useDebugControls() {
+  const instance = getRootInstance();
+
+  return {
+    recordAction: instance.recordAction.bind(instance),
+  };
 }
 
 function getRootInstance() {

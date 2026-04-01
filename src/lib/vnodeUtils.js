@@ -52,6 +52,7 @@ export function normalizeVnode(vnode) {
     type: vnode.type,
     props: normalizeProps(vnode.props ?? {}),
     children: (vnode.children ?? []).map(normalizeVnode),
+    key: vnode.key ?? null,
   };
 }
 

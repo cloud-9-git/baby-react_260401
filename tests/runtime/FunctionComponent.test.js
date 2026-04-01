@@ -1,9 +1,10 @@
 // @vitest-environment jsdom
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import {
   FunctionComponent,
   createElement,
+  useDebugControls,
   useEffect,
   useMemo,
   useState,
@@ -101,9 +102,9 @@ describe("FunctionComponent runtime", () => {
 
     let updateCalls = 0;
     const originalUpdate = instance.update.bind(instance);
-    instance.update = () => {
+    instance.update = (...args) => {
       updateCalls += 1;
-      return originalUpdate();
+      return originalUpdate(...args);
     };
 
     actions.setCount(1);
@@ -205,23 +206,120 @@ describe("FunctionComponent runtime", () => {
     );
   });
 
-  it("createElement는 key를 무시하고 원시 children을 vnode로 정규화한다", () => {
-    const vnode = createElement("li", { key: "ignore-me", "data-kind": "demo" }, "Task ", 1);
+  it("createElement는 key를 vnode 최상위에 보존하고 원시 children을 정규화한다", () => {
+    const vnode = createElement("li", { key: "item-1", "data-kind": "demo" }, "Task ", 1);
 
     expect(vnode).toEqual(
-      elementNode("li", { "data-kind": "demo" }, [textNode("Task "), textNode("1")]),
+      elementNode("li", { "data-kind": "demo" }, [textNode("Task "), textNode("1")], "item-1"),
     );
   });
 
-  it("child 함수형 컴포넌트는 props만 받아 순수 vnode를 반환한다", () => {
-    function Label({ text }) {
-      return h("span", { className: "label" }, text);
+  it("getDebugSnapshot은 render trace와 patch summary를 노출한다", async () => {
+    const actions = {};
+    const container = document.createElement("div");
+
+    function Label({ value }) {
+      return h("span", { id: "label" }, value);
     }
 
-    const vnode = h("div", {}, h(Label, { text: "stateless" }));
+    function App() {
+      const [count, setCount] = useState(0);
+      actions.setCount = setCount;
 
-    expect(vnode).toEqual(
-      elementNode("div", {}, [elementNode("span", { className: "label" }, [textNode("stateless")])]),
-    );
+      return h(
+        "div",
+        {},
+        h("span", { id: "count" }, String(count)),
+        h(Label, { key: "label-1", value: count === 0 ? "zero" : "one" }),
+      );
+    }
+
+    const instance = new FunctionComponent(App, {}, container);
+    instance.mount();
+
+    expect(instance.getDebugSnapshot()).toEqual({
+      renderCount: 1,
+      isMounted: true,
+      isUpdateScheduled: false,
+      lastPatches: [],
+      renderTrace: [
+        { name: "App", reason: "mount" },
+        { name: "Label", key: "label-1", reason: "mount" },
+      ],
+      lastAction: null,
+    });
+
+    actions.setCount(1);
+    await flushUpdates();
+
+    expect(instance.getDebugSnapshot()).toEqual({
+      renderCount: 2,
+      isMounted: true,
+      isUpdateScheduled: false,
+      lastPatches: [
+        { type: "TEXT", path: [0, 0], summary: "text -> 1" },
+        { type: "TEXT", path: [1, 0], summary: "text -> one" },
+      ],
+      renderTrace: [
+        { name: "App", reason: "state[0] updated" },
+        { name: "Label", key: "label-1", reason: "state[0] updated" },
+      ],
+      lastAction: null,
+    });
+  });
+
+  it("subscribeDebug와 useDebugControls는 lastAction과 스케줄 상태를 전달한다", async () => {
+    const actions = {};
+    const snapshots = [];
+    const container = document.createElement("div");
+    const triggerReact = () => actions.react();
+
+    function App() {
+      const { recordAction } = useDebugControls();
+      const [count, setCount] = useState(0);
+
+      actions.react = () => {
+        recordAction({ type: "react", payload: { emoji: "wow" } });
+        setCount((previousCount) => previousCount + 1);
+      };
+
+      return h("button", { onClick: triggerReact }, String(count));
+    }
+
+    const instance = new FunctionComponent(App, {}, container);
+    const unsubscribe = instance.subscribeDebug((snapshot) => snapshots.push(snapshot));
+
+    instance.mount();
+    actions.react();
+
+    expect(instance.getDebugSnapshot().lastAction).toEqual({
+      type: "react",
+      payload: { emoji: "wow" },
+    });
+
+    await flushUpdates();
+
+    expect(snapshots.some((snapshot) => snapshot.isUpdateScheduled)).toBe(true);
+    expect(snapshots.at(-1)).toEqual({
+      renderCount: 2,
+      isMounted: true,
+      isUpdateScheduled: false,
+      lastPatches: [
+        { type: "TEXT", path: [0], summary: "text -> 1" },
+      ],
+      renderTrace: [
+        { name: "App", reason: "state[0] updated" },
+      ],
+      lastAction: {
+        type: "react",
+        payload: { emoji: "wow" },
+      },
+    });
+
+    const snapshotCount = snapshots.length;
+    unsubscribe();
+    instance.recordAction({ type: "save" });
+
+    expect(snapshots).toHaveLength(snapshotCount);
   });
 });

@@ -3,6 +3,7 @@ import { diff } from "../lib/diff.js";
 import { renderTo } from "../lib/renderTo.js";
 import { withRenderContext } from "./context.js";
 import { normalizeComponentResult } from "./createElement.js";
+import { resolveVNodeTree } from "./resolveVNodeTree.js";
 
 /**
  * 함수형 컴포넌트의 "인스턴스"를 관리하는 클래스
@@ -43,6 +44,14 @@ export class FunctionComponent {
     this.pendingEffects = [];             // 이번 렌더에서 실행 대기 중인 useEffect 목록
     this.isMounted = false;               // mount()가 완료되었는지
     this.isUpdateScheduled = false;       // 리렌더가 이미 예약되었는지 (중복 방지용)
+
+    this.debugListeners = new Set();
+    this.renderCount = 0;
+    this.lastPatches = [];
+    this.renderTrace = [];
+    this.lastAction = null;
+    this.currentRenderReason = null;
+    this.pendingUpdateReason = null;
   }
 
   /**
@@ -51,13 +60,15 @@ export class FunctionComponent {
    * 흐름: 컴포넌트 실행 → vdom 생성 → 실제 DOM으로 변환 → container에 삽입 → effect 실행
    */
   mount() {
-    const nextVdom = this.renderComponent();
+    const nextVdom = this.renderComponent("mount");
 
     this.currentVdom = nextVdom;
+    this.lastPatches = [];
     renderTo(this.container, nextVdom);                // vdom → 실제 DOM으로 변환 후 container에 삽입
     this.currentRootDom = this.container.firstChild ?? null;
     this.isMounted = true;
     this.flushEffects();                               // useEffect 콜백 실행
+    this.notifyDebug();
 
     return this.currentRootDom;
   }
@@ -67,27 +78,30 @@ export class FunctionComponent {
    *
    * 흐름: 컴포넌트 재실행 → 새 vdom 생성 → 이전 vdom과 diff → 패치(최소 변경)만 DOM에 적용
    */
-  update() {
+  update(reason = "update") {
     // 아직 mount 안 됐으면 mount부터
     if (!this.isMounted) {
       return this.mount();
     }
 
     const previousVdom = this.currentVdom;
-    const nextVdom = this.renderComponent();           // 컴포넌트 함수 다시 실행 → 새 vdom
+    const nextVdom = this.renderComponent(reason);     // 컴포넌트 함수 다시 실행 → 새 vdom
 
     this.currentVdom = nextVdom;
 
     // 이전에 렌더된 DOM이 없으면 (예: 빈 텍스트였던 경우) 전체를 새로 그림
     if (!this.currentRootDom) {
+      this.lastPatches = [];
       renderTo(this.container, nextVdom);
       this.currentRootDom = this.container.firstChild ?? null;
       this.flushEffects();
+      this.notifyDebug();
       return this.currentRootDom;
     }
 
     // 이전 vdom과 새 vdom을 비교하여 차이(patches)를 계산
     const patches = diff(previousVdom, nextVdom);
+    this.lastPatches = patches.map(summarizePatch);
 
     if (patches.length > 0) {
       // 차이가 있으면 최소한의 DOM 조작만 수행
@@ -103,6 +117,7 @@ export class FunctionComponent {
     }
 
     this.flushEffects();
+    this.notifyDebug();
     return this.currentRootDom;
   }
 
@@ -151,16 +166,21 @@ export class FunctionComponent {
    * 즉, isUpdateScheduled 플래그 하나로
    * "여러 setState → 렌더 1번"을 보장하는 구조다.
    */
-  scheduleUpdate() {
+  scheduleUpdate(reason = "update") {
     if (this.isUpdateScheduled) {
       return;
     }
 
+    this.pendingUpdateReason = reason;
     this.isUpdateScheduled = true;
+    this.notifyDebug();
 
     queueMicrotask(() => {
       this.isUpdateScheduled = false;
-      this.update();
+      const nextReason = this.pendingUpdateReason ?? "update";
+
+      this.pendingUpdateReason = null;
+      this.update(nextReason);
     });
   }
 
@@ -170,13 +190,24 @@ export class FunctionComponent {
    * hookIndex를 0으로 리셋 → 함수 실행 시 hook들이 순서대로 다시 0번부터 읽음
    * withRenderContext로 감싸서 hook들이 이 인스턴스(this)에 바인딩되도록 한다.
    */
-  renderComponent() {
+  renderComponent(reason = this.isMounted ? "update" : "mount") {
     this.hookIndex = 0;
     this.pendingEffects = [];
+    this.renderTrace = [];
+    this.currentRenderReason = reason;
 
-    return withRenderContext(this, "root", () =>
-      normalizeComponentResult(this.renderFn(this.props)),
-    );
+    try {
+      const unresolvedVdom = withRenderContext(this, "root", () => {
+        this.trackComponentRender(this.renderFn);
+        return normalizeComponentResult(this.renderFn(this.props));
+      });
+      const resolvedVdom = resolveVNodeTree(unresolvedVdom, this);
+
+      this.renderCount += 1;
+      return resolvedVdom;
+    } finally {
+      this.currentRenderReason = null;
+    }
   }
 
   /**
@@ -208,4 +239,117 @@ export class FunctionComponent {
       hook.cleanup = typeof cleanup === "function" ? cleanup : null;
     }
   }
+
+  trackComponentRender(component, key = null) {
+    const renderEntry = {
+      name: getComponentName(component),
+      reason: this.currentRenderReason ?? "update",
+    };
+
+    if (key != null) {
+      renderEntry.key = key;
+    }
+
+    this.renderTrace.push(renderEntry);
+  }
+
+  getDebugSnapshot() {
+    return {
+      renderCount: this.renderCount,
+      isMounted: this.isMounted,
+      isUpdateScheduled: this.isUpdateScheduled,
+      lastPatches: cloneDebugValue(this.lastPatches),
+      renderTrace: cloneDebugValue(this.renderTrace),
+      lastAction: cloneDebugValue(this.lastAction),
+    };
+  }
+
+  subscribeDebug(listener) {
+    if (typeof listener !== "function") {
+      throw new TypeError("Debug listener must be a function.");
+    }
+
+    this.debugListeners.add(listener);
+
+    return () => {
+      this.debugListeners.delete(listener);
+    };
+  }
+
+  recordAction(action) {
+    this.lastAction = cloneDebugValue(action);
+    this.notifyDebug();
+    return cloneDebugValue(this.lastAction);
+  }
+
+  notifyDebug() {
+    const snapshot = this.getDebugSnapshot();
+
+    for (const listener of this.debugListeners) {
+      listener(snapshot);
+    }
+  }
+}
+
+function summarizePatch(patch) {
+  return {
+    type: patch.type,
+    path: [...(patch.path ?? [])],
+    summary: describePatch(patch),
+  };
+}
+
+function describePatch(patch) {
+  switch (patch.type) {
+    case "TEXT":
+      return `text -> ${String(patch.value ?? "")}`;
+    case "PROPS":
+      return `props: ${Object.keys(patch.props ?? {}).join(", ")}`;
+    case "ADD":
+      return `add ${describeNode(patch.node)}`;
+    case "REMOVE":
+      return "remove node";
+    case "REPLACE":
+      return `replace with ${describeNode(patch.node)}`;
+    default:
+      return "patch applied";
+  }
+}
+
+function describeNode(node) {
+  if (!node || typeof node !== "object") {
+    return "node";
+  }
+
+  if (node.nodeType === "TEXT_NODE") {
+    return `text(${String(node.value ?? "")})`;
+  }
+
+  if (node.nodeType === "ELEMENT_NODE") {
+    return `<${node.type}>`;
+  }
+
+  return "node";
+}
+
+function getComponentName(component) {
+  return component.displayName || component.name || "Anonymous";
+}
+
+function cloneDebugValue(value) {
+  if (Array.isArray(value)) {
+    return value.map(cloneDebugValue);
+  }
+
+  if (value && typeof value === "object") {
+    const cloned = {};
+
+    for (const [key, nestedValue] of Object.entries(value)) {
+      cloned[key] = cloneDebugValue(nestedValue);
+    }
+
+    return cloned;
+  }
+
+  return value;
 }
