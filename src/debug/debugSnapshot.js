@@ -19,12 +19,12 @@ export function createMockDebugSnapshot(overrides = {}) {
     isMounted: true,
     isUpdateScheduled: false,
     lastPatches: [
-      { type: "TEXT", path: [0, 1, 0], summary: 'text -> "3 votes"' },
+      { type: "TEXT", path: [0, 1, 0], summary: '텍스트 -> "3표"' },
       { type: "PROPS", path: [1, 0], summary: "className, aria-pressed" },
     ],
     renderTrace: [
-      { name: "App", reason: "state[0] updated" },
-      { name: "ReactionButton", reason: "rendered with parent update", key: "wow" },
+      { name: "App", reason: "상태[0] 업데이트됨" },
+      { name: "ReactionButton", reason: "부모 업데이트로 렌더됨", key: "wow" },
     ],
     lastAction: {
       type: "react",
@@ -104,31 +104,34 @@ export function formatDebugAction(action) {
   const normalized = normalizeDebugAction(action);
 
   if (!normalized) {
-    return "No action yet";
+    return "아직 액션이 없습니다";
   }
 
   const payloadText = formatDebugPayload(normalized.payload);
-  return payloadText === "No payload" ? normalized.type : `${normalized.type}: ${payloadText}`;
+  const actionType = localizeActionType(normalized.type);
+
+  return payloadText === "페이로드 없음" ? actionType : `${actionType}: ${payloadText}`;
 }
 
 export function formatRenderTraceEntry(entry) {
   if (!isPlainObject(entry) || typeof entry.name !== "string" || entry.name.trim() === "") {
-    return "Unknown component";
+    return "알 수 없는 컴포넌트";
   }
 
+  const displayName = localizeComponentName(entry.name.trim());
   const keyText =
     typeof entry.key === "string" && entry.key.trim() !== "" ? ` [${entry.key.trim()}]` : "";
   const reasonText =
     typeof entry.reason === "string" && entry.reason.trim() !== ""
       ? entry.reason.trim()
-      : "rendered";
+      : "렌더됨";
 
-  return `${entry.name.trim()}${keyText} - ${reasonText}`;
+  return `${displayName}${keyText} - ${reasonText}`;
 }
 
 export function formatPatchSummaryEntry(entry) {
   if (!isPlainObject(entry) || typeof entry.type !== "string") {
-    return "UNKNOWN @ []";
+    return "알 수 없음 @ []";
   }
 
   const path = Array.isArray(entry.path) ? entry.path : [];
@@ -138,7 +141,7 @@ export function formatPatchSummaryEntry(entry) {
       ? `: ${entry.summary.trim()}`
       : "";
 
-  return `${entry.type} @ ${pathText}${summary}`;
+  return `${localizePatchType(entry.type)} @ ${pathText}${summary}`;
 }
 
 export function formatDebugPayload(payload) {
@@ -146,10 +149,10 @@ export function formatDebugPayload(payload) {
   const entries = Object.entries(normalized);
 
   if (entries.length === 0) {
-    return "No payload";
+    return "페이로드 없음";
   }
 
-  return entries.map(([key, value]) => `${key}=${formatScalar(value)}`).join(", ");
+  return entries.map(([key, value]) => `${localizePayloadKey(key)}=${formatScalar(value)}`).join(", ");
 }
 
 function normalizeCount(value) {
@@ -187,7 +190,7 @@ function normalizeRenderTraceList(value) {
         reason:
           typeof entry.reason === "string" && entry.reason.trim() !== ""
             ? entry.reason.trim()
-            : "rendered",
+            : "렌더됨",
       };
 
       if (typeof entry.key === "string" && entry.key.trim() !== "") {
@@ -211,15 +214,15 @@ function isPatchSummary(value) {
 function createPatchSummary(patch) {
   switch (patch?.type) {
     case "TEXT":
-      return `text -> ${formatScalar(patch?.value ?? "")}`;
+      return `텍스트 -> ${formatScalar(patch?.value ?? "")}`;
     case "PROPS":
-      return Object.keys(isPlainObject(patch?.props) ? patch.props : {}).join(", ") || "props updated";
+      return Object.keys(isPlainObject(patch?.props) ? patch.props : {}).join(", ") || "속성 변경";
     case "ADD":
-      return `added ${describeNode(patch?.node)}`;
+      return `${describeNode(patch?.node)} 추가`;
     case "REMOVE":
-      return "removed node";
+      return "노드 삭제";
     case "REPLACE":
-      return `replaced with ${describeNode(patch?.node)}`;
+      return `${describeNode(patch?.node)}로 교체`;
     default:
       return "";
   }
@@ -227,11 +230,11 @@ function createPatchSummary(patch) {
 
 function describeNode(node) {
   if (!isPlainObject(node) || typeof node.nodeType !== "string") {
-    return "node";
+    return "노드";
   }
 
   if (node.nodeType === "TEXT_NODE") {
-    return `text(${formatScalar(node.value ?? "")})`;
+    return `텍스트(${formatScalar(node.value ?? "")})`;
   }
 
   if (typeof node.type === "string" && node.type.trim() !== "") {
@@ -270,4 +273,84 @@ function formatScalar(value) {
 
 function isPlainObject(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function localizeActionType(type) {
+  switch (type) {
+    case "react":
+      return "반응";
+    case "save":
+      return "저장";
+    case "restore":
+      return "복원";
+    case "reset":
+      return "초기화";
+    default:
+      return type;
+  }
+}
+
+function localizePatchType(type) {
+  switch (type) {
+    case "TEXT":
+      return "텍스트";
+    case "PROPS":
+      return "속성";
+    case "ADD":
+      return "추가";
+    case "REMOVE":
+      return "삭제";
+    case "REPLACE":
+      return "교체";
+    default:
+      return type;
+  }
+}
+
+function localizePayloadKey(key) {
+  switch (key) {
+    case "emoji":
+      return "이모지";
+    case "emojiId":
+      return "이모지ID";
+    case "label":
+      return "레이블";
+    case "totalVotes":
+      return "총투표수";
+    case "savedAt":
+      return "저장시각";
+    case "selectedEmoji":
+      return "선택이모지";
+    case "restored":
+      return "복원됨";
+    case "tag":
+      return "태그";
+    case "scope":
+      return "범위";
+    case "count":
+      return "개수";
+    default:
+      return key;
+  }
+}
+
+function localizeComponentName(name) {
+  switch (name) {
+    case "App":
+      return "앱";
+    case "ReactionButton":
+      return "반응버튼";
+    case "EmojiReactionBoardApp":
+      return "이모지반응보드앱";
+    case "MetricsCards":
+      return "지표카드";
+    case "RecentActivity":
+      return "최근활동";
+    case "SidebarPersistenceControls":
+      return "저장컨트롤";
+    case "Anonymous":
+      return "익명컴포넌트";
+    default:
+      return name;
+  }
 }

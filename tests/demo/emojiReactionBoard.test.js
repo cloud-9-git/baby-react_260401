@@ -92,9 +92,9 @@ describe("EmojiReactionBoardApp", () => {
             id: "reaction-1",
             emojiId: "fire",
             emoji: "🔥",
-            label: "Fire",
-            guestName: "John Doe",
-            guestInitials: "JD",
+            label: "불꽃",
+            guestName: "김하늘",
+            guestInitials: "하",
             guestAvatarClassName: "bg-tertiary-fixed text-on-tertiary-fixed",
             timestamp: 1712345678,
           },
@@ -104,7 +104,7 @@ describe("EmojiReactionBoardApp", () => {
           type: "save",
           payload: { totalVotes: 7 },
           timestamp: 1712345678,
-          summary: "Saved 7 votes to localStorage.",
+          summary: "7표를 브라우저 저장소에 저장했습니다.",
           renderTraceHints: [],
           patchSummaryHints: [],
         },
@@ -114,10 +114,10 @@ describe("EmojiReactionBoardApp", () => {
     const { container } = mountApp();
 
     expect(container.querySelector('[data-role="metric-total"]')?.textContent).toContain("7");
-    expect(container.querySelector('[data-role="metric-leader"]')?.textContent).toContain("Fire");
+    expect(container.querySelector('[data-role="metric-leader"]')?.textContent).toContain("불꽃");
     expect(container.querySelector('[data-role="metric-percentage"]')?.textContent).toContain("57.1");
     expect(container.querySelector('[data-emoji-id="fire"]')?.className).toContain("border-4");
-    expect(document.title).toBe("Baby React Emoji Board · 🔥 7 votes");
+    expect(document.title).toBe("베이비 리액트 이모지 보드 · 🔥 총 7표");
   });
 
   it("emoji 클릭 시 메트릭, recent activity, lastAction이 함께 갱신된다", async () => {
@@ -129,11 +129,11 @@ describe("EmojiReactionBoardApp", () => {
     await flushUpdates();
 
     expect(container.querySelector('[data-role="metric-total"]')?.textContent).toContain("2");
-    expect(container.querySelector('[data-role="metric-leader"]')?.textContent).toContain("Rocket");
+    expect(container.querySelector('[data-role="metric-leader"]')?.textContent).toContain("로켓");
     expect(container.querySelector('[data-role="metric-percentage"]')?.textContent).toContain("100.0");
-    expect(container.querySelector('[data-role="recent-activity"]')?.textContent).toContain("reacted with");
-    expect(container.querySelector('[data-role="last-action"] pre')?.textContent).toContain('"type": "react"');
-    expect(container.querySelector('[data-role="last-action"] pre')?.textContent).toContain('"emojiId": "rocket"');
+    expect(container.querySelector('[data-role="recent-activity"]')?.textContent).toContain("에 반응했어요");
+    expect(container.querySelector('[data-role="last-action"] pre')?.textContent).toContain('"동작": "반응"');
+    expect(container.querySelector('[data-role="last-action"] pre')?.textContent).toContain('"이모지ID": "rocket"');
   });
 
   it("Save 클릭 시 localStorage payload와 savedAt이 기록된다", async () => {
@@ -148,7 +148,7 @@ describe("EmojiReactionBoardApp", () => {
 
     expect(persistedValue.votes.fire).toBe(1);
     expect(typeof persistedValue.savedAt).toBe("number");
-    expect(container.querySelector('[data-role="saved-at"]')?.textContent).not.toContain("Not saved yet");
+    expect(container.querySelector('[data-role="saved-at"]')?.textContent).not.toContain("아직 저장하지 않음");
   });
 
   it("Reset은 라이브 상태만 초기화하고 저장 snapshot은 유지한다", async () => {
@@ -166,7 +166,7 @@ describe("EmojiReactionBoardApp", () => {
     const persistedValue = JSON.parse(localStorage.getItem(STORAGE_KEY));
 
     expect(container.querySelector('[data-role="metric-total"]')?.textContent).toContain("0");
-    expect(container.querySelector('[data-role="recent-activity"]')?.textContent).toContain("No reactions yet");
+    expect(container.querySelector('[data-role="recent-activity"]')?.textContent).toContain("아직 반응이 없어요");
     expect(persistedValue.votes.fire).toBe(1);
     expect(persistedValue.votes.rocket).toBe(0);
   });
@@ -186,8 +186,8 @@ describe("EmojiReactionBoardApp", () => {
     await flushUpdates();
 
     expect(container.querySelector('[data-role="metric-total"]')?.textContent).toContain("1");
-    expect(container.querySelector('[data-role="metric-leader"]')?.textContent).toContain("Fire");
-    expect(container.querySelector('[data-role="last-action"] pre')?.textContent).toContain('"type": "restore"');
+    expect(container.querySelector('[data-role="metric-leader"]')?.textContent).toContain("불꽃");
+    expect(container.querySelector('[data-role="last-action"] pre')?.textContent).toContain('"동작": "복원"');
   });
 
   it("루트 렌더 안에 data-panel-root placeholder가 존재하고 비어 있다", () => {

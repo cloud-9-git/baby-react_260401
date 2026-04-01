@@ -3,10 +3,12 @@
   <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Baby React Emoji Board</title>
+    <title>베이비 리액트 이모지 보드</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Archivo+Black&amp;family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&amp;family=Epilogue:wght@400;700&amp;display=swap"
+      href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&amp;display=swap"
       rel="stylesheet"
     />
     <link
@@ -68,9 +70,9 @@
               "surface-tint": "#006c46",
             },
             fontFamily: {
-              headline: ["Archivo Black", "sans-serif"],
-              body: ["Plus Jakarta Sans", "sans-serif"],
-              label: ["Plus Jakarta Sans", "sans-serif"],
+              headline: ["Bagel Fat One", "sans-serif"],
+              body: ["Bagel Fat One", "sans-serif"],
+              label: ["Bagel Fat One", "sans-serif"],
             },
             borderRadius: {
               DEFAULT: "1rem",
@@ -145,6 +147,73 @@
         gap: 20px;
       }
 
+      .debug-rail {
+        position: relative;
+        background:
+          linear-gradient(180deg, rgba(7, 16, 7, 0.98), rgba(3, 8, 3, 0.98)),
+          #020602;
+        color: #91ffb8;
+        box-shadow: inset 1px 0 0 rgba(77, 255, 178, 0.14);
+      }
+
+      .debug-rail::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(77, 255, 178, 0.035) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(77, 255, 178, 0.03) 1px, transparent 1px);
+        background-size: 100% 24px, 24px 100%;
+        pointer-events: none;
+      }
+
+      .debug-rail-header {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+
+      .debug-rail-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 9999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #4dffb2;
+        background: rgba(77, 255, 178, 0.12);
+        border: 1px solid rgba(77, 255, 178, 0.24);
+        box-shadow: 0 0 24px rgba(77, 255, 178, 0.14);
+      }
+
+      .debug-rail-label {
+        margin: 0;
+        font-size: 10px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: rgba(145, 255, 184, 0.72);
+        font-weight: 700;
+      }
+
+      .debug-rail-title {
+        margin: 4px 0 0;
+        font-size: 20px;
+        line-height: 1.2;
+        color: #d7ffe5;
+      }
+
+      .debug-panel-hero,
+      .debug-card,
+      .debug-sidebar-card {
+        border: 1px solid rgba(77, 255, 178, 0.16);
+        border-radius: 24px;
+        background: linear-gradient(180deg, rgba(8, 22, 10, 0.94), rgba(4, 12, 5, 0.98));
+        box-shadow: 0 22px 58px rgba(0, 0, 0, 0.34);
+      }
+
       .debug-panel-hero,
       .debug-card {
         animation: float-up 520ms ease-out both;
@@ -176,17 +245,26 @@
         margin-bottom: 14px;
       }
 
+      .debug-card-head h2 {
+        margin: 0;
+        color: #d7ffe5;
+        font-size: 15px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
       .debug-emphasis {
         font-size: 18px;
         line-height: 1.45;
         font-weight: 700;
         letter-spacing: -0.02em;
+        color: #eafff1;
       }
 
       .debug-meta,
       .debug-empty {
         margin-bottom: 0;
-        color: #647c72;
+        color: rgba(145, 255, 184, 0.72);
       }
 
       .debug-log-list {
@@ -197,12 +275,168 @@
       }
 
       .debug-log-item {
-        color: #121e19;
+        color: #d7ffe5;
       }
 
       .debug-log-label {
         display: inline-block;
         line-height: 1.45;
+      }
+
+      .debug-subtitle {
+        color: rgba(145, 255, 184, 0.76);
+      }
+
+      .debug-tab-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .debug-tab-button {
+        appearance: none;
+        border: 1px solid rgba(77, 255, 178, 0.18);
+        background: rgba(77, 255, 178, 0.06);
+        color: rgba(145, 255, 184, 0.78);
+        border-radius: 9999px;
+        padding: 10px 14px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        transition: background 180ms ease, color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+      }
+
+      .debug-tab-button.is-active {
+        background: #4dffb2;
+        color: #041108;
+        border-color: #4dffb2;
+        box-shadow: 0 0 0 1px rgba(77, 255, 178, 0.2), 0 0 24px rgba(77, 255, 178, 0.18);
+      }
+
+      .debug-tab-panels {
+        display: grid;
+      }
+
+      .debug-tab-panels > div[hidden] {
+        display: none;
+      }
+
+      .debug-panel-hero {
+        padding: 24px;
+      }
+
+      .debug-card {
+        padding: 22px;
+      }
+
+      .debug-metric-card {
+        min-width: 0;
+        border: 1px solid rgba(77, 255, 178, 0.14);
+        background: linear-gradient(180deg, rgba(10, 28, 12, 0.94), rgba(5, 16, 6, 0.96));
+        box-shadow: inset 0 1px 0 rgba(77, 255, 178, 0.04);
+      }
+
+      .debug-metric-card .summary-label {
+        color: rgba(145, 255, 184, 0.72);
+      }
+
+      .debug-metric-card .summary-value {
+        color: #4dffb2;
+      }
+
+      .debug-resize-handle {
+        position: absolute;
+        left: -6px;
+        top: 0;
+        width: 12px;
+        height: 100%;
+        cursor: col-resize;
+        z-index: 2;
+      }
+
+      .debug-resize-handle::before {
+        content: "";
+        position: absolute;
+        left: 5px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 2px;
+        height: 96px;
+        border-radius: 9999px;
+        background: linear-gradient(180deg, rgba(77, 255, 178, 0), rgba(77, 255, 178, 0.8), rgba(77, 255, 178, 0));
+        box-shadow: 0 0 18px rgba(77, 255, 178, 0.28);
+      }
+
+      .debug-sidebar-card {
+        position: relative;
+        z-index: 1;
+        padding: 20px;
+      }
+
+      .debug-sidebar-label {
+        margin: 0 0 12px;
+        color: rgba(145, 255, 184, 0.72);
+      }
+
+      .debug-sidebar-console {
+        margin: 0;
+        padding: 16px;
+        border-radius: 16px;
+        background: rgba(1, 5, 2, 0.88);
+        border: 1px solid rgba(77, 255, 178, 0.12);
+        color: #4dffb2;
+        font-size: 12px;
+        line-height: 1.5;
+        overflow-x: auto;
+      }
+
+      .debug-controls {
+        border-top: 1px solid rgba(77, 255, 178, 0.16);
+      }
+
+      .debug-controls .debug-sidebar-label {
+        margin-bottom: 4px;
+      }
+
+      .debug-control-button {
+        border: 1px solid rgba(77, 255, 178, 0.22);
+        background: rgba(77, 255, 178, 0.08);
+        color: #d7ffe5;
+      }
+
+      .debug-control-button--primary {
+        background: #4dffb2;
+        color: #041108;
+        border-color: #4dffb2;
+      }
+
+      .demo-shell {
+        display: flex;
+        padding-top: 5rem;
+      }
+
+      .demo-main {
+        width: 100%;
+      }
+
+      .demo-footer {
+        padding-right: 0;
+      }
+
+      @media (min-width: 768px) {
+        .demo-main {
+          width: calc(100% - var(--debug-rail-width, 32rem));
+        }
+
+        .debug-rail {
+          width: var(--debug-rail-width, 32rem);
+        }
+
+        .demo-footer {
+          padding-right: var(--debug-rail-width, 32rem);
+        }
       }
 
       @keyframes float-up {

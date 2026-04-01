@@ -9,8 +9,8 @@ export function RenderTracePanel({ items }) {
       className: "panel-card debug-card",
       "data-role": "render-trace-panel",
     },
-    h("div", { className: "debug-card-head" }, h("h2", {}, "Render Trace Panel")),
-    renderList(items, "No render trace yet", "render-trace-list"),
+    h("div", { className: "debug-card-head" }, h("h2", {}, "렌더 추적 패널")),
+    renderList(items, "아직 렌더 추적이 없습니다", "render-trace-list"),
   );
 }
 

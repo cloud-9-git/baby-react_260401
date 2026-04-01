@@ -6,6 +6,15 @@ import {
   STORAGE_VERSION,
 } from "./data.js";
 
+const LEGACY_GUEST_MAP = new Map([
+  ["John Doe", { name: "김하늘", initials: "하" }],
+  ["Alice Smith", { name: "이서윤", initials: "서" }],
+  ["Bob King", { name: "박준호", initials: "준" }],
+  ["Mina Park", { name: "박미나", initials: "미" }],
+  ["Ethan Kim", { name: "김이든", initials: "든" }],
+  ["Sora Lee", { name: "이소라", initials: "소" }],
+]);
+
 export function createEmptyVotes() {
   return Object.fromEntries(EMOJI_CATALOG.map(({ id }) => [id, 0]));
 }
@@ -116,10 +125,10 @@ export function createReactionEntry(emoji, totalVotesBefore) {
 
 export function formatSavedAt(timestamp) {
   if (!timestamp) {
-    return "Not saved yet";
+    return "아직 저장하지 않음";
   }
 
-  return new Date(timestamp).toLocaleTimeString("en-US", {
+  return new Date(timestamp).toLocaleTimeString("ko-KR", {
     hour: "numeric",
     minute: "2-digit",
   });
@@ -127,23 +136,23 @@ export function formatSavedAt(timestamp) {
 
 export function formatRelativeTime(timestamp) {
   if (!timestamp) {
-    return "just now";
+    return "방금 전";
   }
 
   const elapsedSeconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
 
   if (elapsedSeconds < 60) {
-    return "just now";
+    return "방금 전";
   }
 
   const elapsedMinutes = Math.floor(elapsedSeconds / 60);
 
   if (elapsedMinutes < 60) {
-    return `${elapsedMinutes} minute${elapsedMinutes === 1 ? "" : "s"} ago`;
+    return `${elapsedMinutes}분 전`;
   }
 
   const elapsedHours = Math.floor(elapsedMinutes / 60);
-  return `${elapsedHours} hour${elapsedHours === 1 ? "" : "s"} ago`;
+  return `${elapsedHours}시간 전`;
 }
 
 function normalizeSnapshot(snapshot) {
@@ -206,13 +215,15 @@ function sanitizeRecentReaction(entry) {
     return null;
   }
 
+  const guest = localizeGuestEntry(entry.guestName, entry.guestInitials);
+
   return {
     id: typeof entry.id === "string" ? entry.id : `reaction-${Date.now()}-${emoji.id}`,
     emojiId: emoji.id,
     emoji: typeof entry.emoji === "string" ? entry.emoji : emoji.emoji,
-    label: typeof entry.label === "string" ? entry.label : emoji.label,
-    guestName: typeof entry.guestName === "string" ? entry.guestName : "Guest User",
-    guestInitials: typeof entry.guestInitials === "string" ? entry.guestInitials : "GU",
+    label: emoji.label,
+    guestName: guest.name,
+    guestInitials: guest.initials,
     guestAvatarClassName:
       typeof entry.guestAvatarClassName === "string"
         ? entry.guestAvatarClassName
@@ -256,6 +267,21 @@ function sanitizeHints(hints) {
       target: typeof hint.target === "string" ? hint.target : undefined,
       summary: typeof hint.summary === "string" ? hint.summary : "",
     }));
+}
+
+function localizeGuestEntry(name, initials) {
+  if (typeof name === "string" && LEGACY_GUEST_MAP.has(name)) {
+    return LEGACY_GUEST_MAP.get(name);
+  }
+
+  if (typeof name === "string" && name.trim() !== "") {
+    return {
+      name,
+      initials: typeof initials === "string" && initials.trim() !== "" ? initials : name.trim().slice(0, 1),
+    };
+  }
+
+  return { name: "참여자", initials: "참" };
 }
 
 function sanitizeTimestamp(timestamp) {

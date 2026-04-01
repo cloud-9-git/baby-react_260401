@@ -79,6 +79,38 @@ describe("DebugPanelApp", () => {
     expect(container.textContent).toContain("App - state[2] updated");
     expect(container.textContent).toContain("REMOVE @ [2]: removed node");
   });
+
+  it("탭 버튼으로 action, render, patch 섹션을 전환한다", async () => {
+    const container = document.createElement("div");
+    const source = createMockDebugSource(
+      createMockDebugSnapshot({
+        renderTrace: [{ name: "App", reason: "state[0] updated" }],
+        lastPatches: [{ type: "TEXT", path: [0], summary: "updated label" }],
+      }),
+    );
+
+    mountDebugPanel(container, source);
+
+    const actionPanel = container.querySelector('[data-role="debug-tab-panel-action"]');
+    const renderPanel = container.querySelector('[data-role="debug-tab-panel-render"]');
+    const patchPanel = container.querySelector('[data-role="debug-tab-panel-patch"]');
+
+    expect(actionPanel?.hasAttribute("hidden")).toBe(false);
+    expect(renderPanel?.hasAttribute("hidden")).toBe(true);
+    expect(patchPanel?.hasAttribute("hidden")).toBe(true);
+
+    container.querySelector('[data-tab="render"]')?.click();
+    await flushUpdates();
+
+    expect(actionPanel?.hasAttribute("hidden")).toBe(true);
+    expect(renderPanel?.hasAttribute("hidden")).toBe(false);
+
+    container.querySelector('[data-tab="patch"]')?.click();
+    await flushUpdates();
+
+    expect(renderPanel?.hasAttribute("hidden")).toBe(true);
+    expect(patchPanel?.hasAttribute("hidden")).toBe(false);
+  });
 });
 
 describe("debug snapshot formatting", () => {

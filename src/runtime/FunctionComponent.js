@@ -276,13 +276,13 @@ export class FunctionComponent {
   recordRenderTrace(component, props = {}) {
     this.currentRenderTrace.push({
       name: getComponentName(component),
-      reason: this.isMounted ? "rendered with parent update" : "rendered on mount",
+      reason: this.isMounted ? "부모 업데이트로 렌더됨" : "마운트 시 렌더됨",
       ...(typeof props.key === "string" && props.key.trim() !== "" ? { key: props.key.trim() } : {}),
     });
   }
 
   recordStateUpdate(index) {
-    this.pendingStateReasons.push(`state[${index}] updated`);
+    this.pendingStateReasons.push(`상태[${index}] 업데이트됨`);
   }
 
   commitDebugSnapshot(partialSnapshot = {}) {
