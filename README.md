@@ -1,5 +1,17 @@
 # React-like Runtime + Coding Sprint Board
 
+> Status note
+>
+> 이 README는 현재 저장소에 들어 있는 `Coding Sprint Board` 기준 설명 문서입니다.
+> 지금 진행 중인 병렬 개발 라운드의 최신 기준 문서는 아래 순서를 따릅니다.
+>
+> 1. `/Users/wiseungcheol/Desktop/W5_React/React/docs/START_HERE.md`
+> 2. `/Users/wiseungcheol/Desktop/W5_React/React/docs/Parallel_Development_Guide.md`
+> 3. `/Users/wiseungcheol/Desktop/W5_React/React/docs/Architecture_Contracts.md`
+> 4. 각 역할별 `/Users/wiseungcheol/Desktop/W5_React/React/docs/agents/*.md`
+>
+> 즉, 새 작업을 시작하는 에이전트는 이 README보다 위 문서들을 우선해야 합니다.
+
 ## 프로젝트 한 줄 소개
 
 기존 Week 3 Virtual DOM 엔진(`diff`, `applyPatches`, `vdomToDom`)은 유지하고, 그 위에 **함수형 컴포넌트 + Hook 런타임**을 직접 구현해 동작하는 스프린트 보드를 만든 프로젝트입니다.

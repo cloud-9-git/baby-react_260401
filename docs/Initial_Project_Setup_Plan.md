@@ -1,5 +1,19 @@
 # 새 프로젝트 초기 구성 계획
 
+> Archive note
+>
+> 이 문서는 프로젝트를 처음 세팅할 때의 초기 계획 문서입니다.
+> 현재 병렬 개발의 구현 기준 문서가 아닙니다.
+>
+> 현재 라운드의 작업 기준은 아래 문서를 우선합니다.
+>
+> 1. `/Users/wiseungcheol/Desktop/W5_React/React/docs/START_HERE.md`
+> 2. `/Users/wiseungcheol/Desktop/W5_React/React/docs/Parallel_Development_Guide.md`
+> 3. `/Users/wiseungcheol/Desktop/W5_React/React/docs/Architecture_Contracts.md`
+> 4. 각 역할별 `/Users/wiseungcheol/Desktop/W5_React/React/docs/agents/*.md`
+>
+> 이 문서는 "초기 프로젝트를 어떻게 만들었는가"를 이해할 때만 참고합니다.
+
 이 문서는 새 프로젝트를 시작할 때 필요한 최소 계획만 정리한다.
 
 목표:
