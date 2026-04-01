@@ -1,5 +1,4 @@
-import { NodeType, elementNode, textNode } from "../constants.js";
-import { getCurrentInstance, withRenderContext } from "./context.js";
+import { NodeType, componentNode, elementNode, textNode } from "../constants.js";
 
 /**
  * Virtual DOM 노드를 생성하는 핵심 함수 (React.createElement 역할)
@@ -14,26 +13,22 @@ import { getCurrentInstance, withRenderContext } from "./context.js";
  * @returns {object} vnode (Virtual DOM 노드)
  */
 export function createElement(type, props, ...children) {
-  const normalizedProps = normalizeProps(props);
+  const { rest: normalizedProps, key: vnodeKey, propChildren } = splitProps(props);
 
-  // props.children과 나머지 children을 합쳐서 하나의 배열로 정규화
   const normalizedChildren = normalizeChildren([
-    ...(Array.isArray(props?.children) ? props.children : props?.children != null ? [props.children] : []),
+    ...propChildren,
     ...children,
   ]);
 
-  // type이 함수 → 함수형 컴포넌트이므로 실행해서 vnode를 얻는다
   if (typeof type === "function") {
-    return renderChildComponent(type, { ...normalizedProps, children: normalizedChildren });
+    return componentNode(type, { ...normalizedProps, children: normalizedChildren }, vnodeKey);
   }
 
-  // type이 문자열이 아니거나 빈 문자열이면 잘못된 타입
   if (typeof type !== "string" || type.trim() === "") {
     throw new TypeError("Invalid component type.");
   }
 
-  // HTML 태그 → { nodeType: "ELEMENT_NODE", type, props, children } 형태의 vnode 반환
-  return elementNode(type, normalizedProps, normalizedChildren);
+  return elementNode(type, normalizedProps, normalizedChildren, vnodeKey);
 }
 
 /**
@@ -66,32 +61,30 @@ export function normalizeComponentResult(value) {
 }
 
 /**
- * 자식 함수형 컴포넌트를 렌더링한다.
- * 현재 렌더 중인 부모 인스턴스의 컨텍스트 안에서 실행하여
- * hooks(useState 등)가 올바른 인스턴스에 바인딩되도록 보장한다.
- */
-function renderChildComponent(component, props) {
-  const instance = getCurrentInstance();
-
-  return withRenderContext(instance, "child", () => normalizeComponentResult(component(props)));
-}
-
-/**
  * props 객체를 정규화한다.
  * - null이면 빈 객체로
  * - key, children은 vnode 트리 구성에만 쓰이므로 props에서 제거
  */
-function normalizeProps(props) {
+function splitProps(props) {
   if (props == null) {
-    return {};
+    return { rest: {}, key: null, propChildren: [] };
   }
 
   if (typeof props !== "object" || Array.isArray(props)) {
     throw new TypeError("Invalid props.");
   }
 
-  const { key: _ignoredKey, children: _ignoredChildren, ...rest } = props;
-  return rest;
+  const { key, children: propChildrenValue, ...rest } = props;
+  return {
+    rest,
+    key: key ?? null,
+    propChildren:
+      Array.isArray(propChildrenValue)
+        ? propChildrenValue
+        : propChildrenValue != null
+          ? [propChildrenValue]
+          : [],
+  };
 }
 
 /**
@@ -110,13 +103,6 @@ function normalizeChildren(children) {
 
 /**
  * 단일 child를 처리하여 target 배열에 추가한다.
- *
- * 처리 규칙:
- *   배열         → 재귀적으로 각 요소를 다시 처리 (중첩 배열 평탄화)
- *   null/boolean → 무시 (렌더링할 것이 없음)
- *   string/number → textNode로 변환 후 추가
- *   vnode 객체   → 그대로 추가
- *   그 외        → 에러
  */
 function appendChild(target, child) {
   if (Array.isArray(child)) {
@@ -144,11 +130,11 @@ function appendChild(target, child) {
   throw new TypeError("Invalid child vnode.");
 }
 
-/**
- * 값이 유효한 vnode인지 확인한다.
- * vnode = { nodeType: "TEXT_NODE" | "ELEMENT_NODE", ... } 형태의 객체
- */
 function isVnode(value) {
   return value !== null && typeof value === "object" && typeof value.nodeType === "string" &&
-    (value.nodeType === NodeType.TEXT || value.nodeType === NodeType.ELEMENT);
+    (
+      value.nodeType === NodeType.TEXT ||
+      value.nodeType === NodeType.ELEMENT ||
+      value.nodeType === NodeType.COMPONENT
+    );
 }
