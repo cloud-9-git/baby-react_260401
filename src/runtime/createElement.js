@@ -14,7 +14,7 @@ import { getCurrentInstance, withRenderContext } from "./context.js";
  * @returns {object} vnode (Virtual DOM 노드)
  */
 export function createElement(type, props, ...children) {
-  const normalizedProps = normalizeProps(props);
+  const { rest: normalizedProps, key: vnodeKey } = splitProps(props);
 
   // props.children과 나머지 children을 합쳐서 하나의 배열로 정규화
   const normalizedChildren = normalizeChildren([
@@ -33,7 +33,7 @@ export function createElement(type, props, ...children) {
   }
 
   // HTML 태그 → { nodeType: "ELEMENT_NODE", type, props, children } 형태의 vnode 반환
-  return elementNode(type, normalizedProps, normalizedChildren);
+  return elementNode(type, normalizedProps, normalizedChildren, vnodeKey);
 }
 
 /**
@@ -73,6 +73,10 @@ export function normalizeComponentResult(value) {
 function renderChildComponent(component, props) {
   const instance = getCurrentInstance();
 
+  if (instance && typeof instance.recordRenderTrace === "function") {
+    instance.recordRenderTrace(component, props);
+  }
+
   return withRenderContext(instance, "child", () => normalizeComponentResult(component(props)));
 }
 
@@ -81,17 +85,17 @@ function renderChildComponent(component, props) {
  * - null이면 빈 객체로
  * - key, children은 vnode 트리 구성에만 쓰이므로 props에서 제거
  */
-function normalizeProps(props) {
+function splitProps(props) {
   if (props == null) {
-    return {};
+    return { rest: {}, key: null };
   }
 
   if (typeof props !== "object" || Array.isArray(props)) {
     throw new TypeError("Invalid props.");
   }
 
-  const { key: _ignoredKey, children: _ignoredChildren, ...rest } = props;
-  return rest;
+  const { key, children: _ignoredChildren, ...rest } = props;
+  return { rest, key: key ?? null };
 }
 
 /**

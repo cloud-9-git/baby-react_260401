@@ -5,8 +5,14 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Baby React Emoji Board</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&amp;family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&amp;family=Epilogue:wght@400;700&amp;display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo+Black&amp;family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&amp;family=Epilogue:wght@400;700&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
     <script id="tailwind-config">
       tailwind.config = {
         darkMode: "class",
@@ -21,7 +27,7 @@
               "on-tertiary": "#ffffff",
               "secondary-container": "#ffdbd0",
               "on-tertiary-fixed-variant": "#4e4800",
-              "tertiary": "#666018",
+              tertiary: "#666018",
               "on-error-container": "#93000a",
               "surface-dim": "#d0ddd5",
               "on-error": "#ffffff",
@@ -29,20 +35,20 @@
               "on-secondary": "#ffffff",
               "secondary-fixed-dim": "#edbbac",
               "on-secondary-container": "#613e33",
-              "secondary": "#7b5549",
+              secondary: "#7b5549",
               "on-tertiary-fixed": "#1f1c00",
               "tertiary-fixed": "#efe58f",
-              "outline": "#647c72",
-              "error": "#ba1a1a",
+              outline: "#647c72",
+              error: "#ba1a1a",
               "surface-container-high": "#deebe3",
               "surface-container": "#e3f1e9",
               "on-surface": "#121e19",
-              "background": "#effdf4",
+              background: "#effdf4",
               "primary-fixed-dim": "#00e297",
               "on-tertiary-container": "#4e4800",
               "on-surface-variant": "#344c42",
               "secondary-fixed": "#ffdbd0",
-              "primary": "#006c46",
+              primary: "#006c46",
               "on-secondary-fixed": "#2f140b",
               "surface-bright": "#effdf4",
               "on-primary-fixed": "#002112",
@@ -54,7 +60,7 @@
               "surface-variant": "#d8e6de",
               "outline-variant": "#b2ccc0",
               "tertiary-container": "#efe58f",
-              "surface": "#effdf4",
+              surface: "#effdf4",
               "inverse-on-surface": "#e6f4ec",
               "on-primary-fixed-variant": "#005234",
               "on-primary": "#ffffff",
@@ -93,9 +99,134 @@
         background: rgba(255, 255, 255, 0.7);
         backdrop-filter: blur(20px);
       }
+
+      .panel-card,
+      .summary-card {
+        border: 1px solid rgba(18, 30, 25, 0.08);
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.72);
+        backdrop-filter: blur(14px);
+        box-shadow: 0 28px 72px rgba(18, 30, 25, 0.08);
+      }
+
+      .eyebrow,
+      .summary-label {
+        margin: 0;
+        font-size: 12px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #005234;
+        font-weight: 700;
+      }
+
+      .muted {
+        margin: 0;
+        color: #647c72;
+      }
+
+      .summary-card {
+        padding: 18px;
+        display: grid;
+        gap: 8px;
+      }
+
+      .summary-value {
+        font-size: 22px;
+        line-height: 1.25;
+        color: #121e19;
+      }
+
+      .tone-sky {
+        background: linear-gradient(180deg, rgba(220, 235, 247, 0.86), rgba(255, 255, 255, 0.86));
+      }
+
+      .debug-panel-shell {
+        display: grid;
+        gap: 20px;
+      }
+
+      .debug-panel-hero,
+      .debug-card {
+        animation: float-up 520ms ease-out both;
+      }
+
+      .debug-title {
+        margin: 10px 0 12px;
+        font-size: clamp(28px, 3vw, 36px);
+        line-height: 1.05;
+        letter-spacing: -0.04em;
+      }
+
+      .debug-metrics {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 18px;
+      }
+
+      .debug-metric-card {
+        min-width: 0;
+      }
+
+      .debug-card-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .debug-emphasis {
+        font-size: 18px;
+        line-height: 1.45;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+
+      .debug-meta,
+      .debug-empty {
+        margin-bottom: 0;
+        color: #647c72;
+      }
+
+      .debug-log-list {
+        display: grid;
+        gap: 10px;
+        margin: 0;
+        padding-left: 20px;
+      }
+
+      .debug-log-item {
+        color: #121e19;
+      }
+
+      .debug-log-label {
+        display: inline-block;
+        line-height: 1.45;
+      }
+
+      @keyframes float-up {
+        from {
+          opacity: 0;
+          transform: translateY(18px);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (max-width: 720px) {
+        .debug-metrics {
+          grid-template-columns: 1fr;
+        }
+      }
     </style>
   </head>
-  <body class="bg-background text-on-background font-body selection:bg-primary-container selection:text-on-primary-container">
+  <body
+    class="bg-background text-on-background font-body selection:bg-primary-container selection:text-on-primary-container"
+  >
     <div data-app-root></div>
     <script type="module" src="/src/demo/main.js"></script>
   </body>

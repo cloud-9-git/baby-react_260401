@@ -186,7 +186,7 @@ export function EmojiReactionBoardApp() {
       { className: "flex pt-20" },
       h(
         "main",
-        { className: "w-full md:w-[calc(100%-20rem)] px-8 md:px-16 py-12" },
+        { className: "w-full md:w-[calc(100%-20rem)] px-8 md:px-16 py-12", "data-role": "board-main" },
         h(HeroSection),
         h(MetricsCards, {
           totalVotes,
@@ -397,6 +397,7 @@ function EmojiBoardSection({ emojiCatalog, selectedEmoji, onReact }) {
               className: createEmojiButtonClassName(selectedEmoji === emoji.id),
               onClick: () => onReact(emoji.id),
               "data-emoji-id": emoji.id,
+              "data-action": "react",
               "aria-label": `${emoji.label} reaction`,
               title: emoji.label,
             },
@@ -442,42 +443,37 @@ function ReactionIntensity({ topReaction, trendingReaction }) {
 }
 
 function RecentActivity({ recentReactions }) {
-  return h(
-    "div",
-    { className: "flex flex-col gap-6" },
-    h("h3", { className: "font-headline text-2xl" }, "Recent Activity"),
-    h(
-      "div",
-      { className: "space-y-4", "data-role": "recent-activity" },
-      recentReactions.length > 0
-        ? recentReactions.map((entry, index) =>
+  const activityItems =
+    recentReactions.length > 0
+      ? recentReactions.map((entry, index) =>
+          h(
+            "div",
+            {
+              key: entry.id,
+              className: `flex items-center gap-4 p-4 bg-surface-container-low rounded-lg${index === 2 ? " opacity-60" : ""}`,
+            },
             h(
               "div",
-              {
-                key: entry.id,
-                className: `flex items-center gap-4 p-4 bg-surface-container-low rounded-lg${index === 2 ? " opacity-60" : ""}`,
-              },
+              { className: `w-10 h-10 rounded-full flex items-center justify-center font-bold ${entry.guestAvatarClassName}` },
+              entry.guestInitials,
+            ),
+            h(
+              "div",
+              { className: "flex-1" },
               h(
-                "div",
-                { className: `w-10 h-10 rounded-full flex items-center justify-center font-bold ${entry.guestAvatarClassName}` },
-                entry.guestInitials,
+                "p",
+                { className: "text-sm font-medium" },
+                entry.guestName,
+                h("span", { className: "text-outline" }, " reacted with "),
+                entry.emoji,
               ),
-              h(
-                "div",
-                { className: "flex-1" },
-                h(
-                  "p",
-                  { className: "text-sm font-medium" },
-                  entry.guestName,
-                  h("span", { className: "text-outline" }, " reacted with "),
-                  entry.emoji,
-                ),
-                h("p", { className: "text-xs text-outline" }, formatRelativeTime(entry.timestamp)),
-              ),
-            ))
-        : h(
+              h("p", { className: "text-xs text-outline" }, formatRelativeTime(entry.timestamp)),
+            ),
+          ))
+      : [
+          h(
             "div",
-            { className: "flex items-center gap-4 p-4 bg-surface-container-low rounded-lg opacity-60" },
+            { key: "empty", className: "flex items-center gap-4 p-4 bg-surface-container-low rounded-lg opacity-60" },
             h("div", { className: "w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface font-bold" }, "—"),
             h(
               "div",
@@ -486,7 +482,13 @@ function RecentActivity({ recentReactions }) {
               h("p", { className: "text-xs text-outline" }, "Tap any emoji to start the feed."),
             ),
           ),
-    ),
+        ];
+
+  return h(
+    "div",
+    { className: "flex flex-col gap-6" },
+    h("h3", { className: "font-headline text-2xl" }, "Recent Activity"),
+    h("div", { className: "space-y-4", "data-role": "recent-activity" }, activityItems),
   );
 }
 

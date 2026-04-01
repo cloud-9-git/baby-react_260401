@@ -24,14 +24,18 @@ export function useState(initialValue) {
       kind: "state",
       value: resolveInitialValue(initialValue),
       setState(nextValue) {
+        const previousValue = hook.value;
         const resolvedValue =
-          typeof nextValue === "function" ? nextValue(hook.value) : nextValue;
+          typeof nextValue === "function" ? nextValue(previousValue) : nextValue;
 
-        if (Object.is(hook.value, resolvedValue)) {
-          return hook.value;
+        if (Object.is(previousValue, resolvedValue)) {
+          return previousValue;
         }
 
         hook.value = resolvedValue;
+        if (typeof instance.recordStateUpdate === "function") {
+          instance.recordStateUpdate(index, previousValue, resolvedValue);
+        }
         instance.scheduleUpdate();
         return hook.value;
       },
