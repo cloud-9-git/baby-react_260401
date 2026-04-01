@@ -1,16 +1,14 @@
 # Baby React
 
-## 우리가 이 과제를 구현한 방식
+## 과제 구현 방식
 
-**기존 Virtual DOM 엔진 위에, 루트 컴포넌트 하나가 Hook과 State를 관리하는 React-like runtime을 만들었습니다.**
-
-이 README는 "React가 무엇인가"보다 **"우리 팀이 어떤 선택으로 이 과제를 구현했는가"**를 빠르게 보여주기 위한 발표용 요약본입니다.
+**기존 Virtual DOM 엔진 위에, 루트 컴포넌트 하나가 Hook과 State를 관리하는 React-like runtime**
 
 ---
 
-## 우리 팀의 핵심 선택
+## 핵심 포인트
 
-| 선택 포인트 | 우리 구현 | 왜 이렇게 했는가 |
+| 포인트 | 구현 방식 | 왜 이렇게 했는가 |
 | --- | --- | --- |
 | 컴포넌트 구조 | 루트 + props-only 자식 | 상태는 한곳에 두고 화면 책임만 분리하기 위해 |
 | 상태 위치 | 루트 컴포넌트에 집중 | Hook은 루트에서만 사용한다는 과제 조건을 가장 분명하게 만족하기 위해 |
@@ -22,7 +20,7 @@
 
 ---
 
-## 우리 구조
+## 동작 구조
 
 ```mermaid
 graph TD
@@ -120,20 +118,6 @@ flowchart LR
 
 ---
 
-## 데모에서 보여주는 것
-
-| 데모 행동 | 우리가 보여주려는 것 |
-| --- | --- |
-| 이모지 클릭 | 루트 상태 변경 -> 여러 UI 동시 갱신 |
-| Save | 상태를 브라우저 저장소에 저장 |
-| Reset | 현재 라이브 상태만 초기화 |
-| Restore | 저장된 상태를 다시 복원 |
-| Debug Panel 확인 | 액션, 렌더 추적, patch 요약 시각화 |
-
-즉, 이 데모는 예쁜 화면 자체보다 **우리 런타임이 실제로 동작한다는 증거**입니다.
-
----
-
 ## 우리 구현 vs 실제 React
 
 | 항목 | 우리 구현 | 실제 React |
@@ -146,23 +130,4 @@ flowchart LR
 | 리스트 처리 | 단순 비교 중심, 일부 keyed diff | 강한 key 기반 reconciliation |
 | effect 실행 | patch 직후 flush | 더 정교한 렌더/커밋 단계 분리 |
 
-우리는 실제 React를 완전히 복제하지 않았습니다. 대신 아래를 가장 설명하기 쉬운 형태로 압축했습니다.
 
-- 상태 보존
-- Hook 순서
-- batching
-- Diff/Patch
-- Lifting State Up
-
----
-
-## 발표용 한 줄 정리
-
-> **"우리는 React를 그대로 만든 것이 아니라, React의 핵심 동작 원리를 가장 설명하기 쉬운 구조로 구현했다."**
-
----
-
-## 더 보기
-
-- 발표자용 자료: [docs/presenter-guide.md](/Users/hi/Library/CloudStorage/Dropbox/Mac/Desktop/Jungle/baby-react_260401/docs/presenter-guide.md)
-- 3분 30초 발표 스크립트: [docs/presentation-script-3m30s.md](/Users/hi/Library/CloudStorage/Dropbox/Mac/Desktop/Jungle/baby-react_260401/docs/presentation-script-3m30s.md)
