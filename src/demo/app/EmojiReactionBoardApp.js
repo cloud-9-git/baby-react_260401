@@ -580,7 +580,7 @@ function SidebarActionCard({ lastActionJson }) {
     h(
       "div",
       {
-        className: "debug-sidebar-console font-mono",
+        className: "debug-sidebar-console",
         "data-role": "last-action",
       },
       h("pre", {}, lastActionJson),

@@ -104,13 +104,13 @@ export function formatDebugAction(action) {
   const normalized = normalizeDebugAction(action);
 
   if (!normalized) {
-    return "No action yet";
+    return "아직 액션이 없어요";
   }
 
   const payloadText = formatDebugPayload(normalized.payload);
   const actionType = normalized.type;
 
-  return payloadText === "No payload" ? actionType : `${actionType}: ${payloadText}`;
+  return payloadText === "페이로드 없음" ? actionType : `${actionType}: ${payloadText}`;
 }
 
 export function formatRenderTraceEntry(entry) {
@@ -149,7 +149,7 @@ export function formatDebugPayload(payload) {
   const entries = Object.entries(normalized);
 
   if (entries.length === 0) {
-    return "No payload";
+    return "페이로드 없음";
   }
 
   return entries.map(([key, value]) => `${key}=${formatScalar(value)}`).join(", ");

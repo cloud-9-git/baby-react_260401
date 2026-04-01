@@ -22,10 +22,10 @@ describe("DebugPanelApp", () => {
 
     mountDebugPanel(container, source);
 
-    expect(container.textContent).toContain("No action yet");
-    expect(container.textContent).toContain("No render trace yet");
-    expect(container.textContent).toContain("No patches recorded");
-    expect(container.textContent).toContain("Render Count");
+    expect(container.textContent).toContain("아직 액션이 없어요");
+    expect(container.textContent).toContain("아직 렌더 추적이 없어요");
+    expect(container.textContent).toContain("아직 기록된 패치가 없어요");
+    expect(container.textContent).toContain("렌더 횟수");
     expect(container.textContent).toContain("0");
   });
 
@@ -115,9 +115,7 @@ describe("DebugPanelApp", () => {
 
 describe("debug snapshot formatting", () => {
   it("payload와 patch path를 읽기 좋은 문자열로 포맷한다", () => {
-    expect(formatDebugAction({ type: "save", payload: { count: 3, scope: "board" } })).toBe(
-      'save: count=3, scope="board"',
-    );
+    expect(formatDebugAction({ type: "save", payload: { count: 3, scope: "board" } })).toBe('save: count=3, scope="board"');
     expect(formatPatchSummaryEntry({ type: "PROPS", path: [1, 2], summary: "className" })).toBe(
       "PROPS @ [1,2]: className",
     );

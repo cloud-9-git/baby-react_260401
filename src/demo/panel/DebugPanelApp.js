@@ -10,9 +10,9 @@ import { RenderTracePanel } from "./components/RenderTracePanel.js";
 
 const h = createElement;
 const DEBUG_TABS = [
-  { id: "action", label: "Action Log" },
-  { id: "render", label: "Render Trace" },
-  { id: "patch", label: "Patch Summary" },
+  { id: "action", label: "액션 로그" },
+  { id: "render", label: "렌더 추적" },
+  { id: "patch", label: "패치 요약" },
 ];
 
 export function DebugPanelApp({ debugTarget }) {
@@ -41,32 +41,32 @@ export function DebugPanelApp({ debugTarget }) {
       {
         className: "panel-card debug-panel-hero",
       },
-      h("p", { className: "eyebrow" }, "Runtime Debug Panel"),
-      h("h1", { className: "debug-title" }, "Render and Patch Activity"),
+      h("p", { className: "eyebrow" }, "런타임 디버그 패널"),
+      h("h1", { className: "debug-title" }, "렌더와 패치 활동"),
       h(
         "p",
         { className: "muted debug-subtitle" },
-        "Subscribe to the public debug snapshot API to inspect the latest action, render trace, and patch summary.",
+        "공개 debug snapshot API를 구독해 최신 액션, 렌더 추적, 패치 요약을 확인합니다.",
       ),
       h(
         "div",
         { className: "debug-metrics", "data-role": "debug-metrics" },
         h(DebugMetricCard, {
-          label: "Render Count",
+          label: "렌더 횟수",
           value: String(model.renderCount),
         }),
         h(DebugMetricCard, {
-          label: "Mounted",
-          value: model.isMounted ? "Yes" : "No",
+          label: "마운트 여부",
+          value: model.isMounted ? "예" : "아니오",
         }),
         h(DebugMetricCard, {
-          label: "Update Scheduled",
-          value: model.isUpdateScheduled ? "Yes" : "No",
+          label: "업데이트 예약",
+          value: model.isUpdateScheduled ? "예" : "아니오",
         }),
       ),
       h(
         "div",
-        { className: "debug-tab-list", role: "tablist", "aria-label": "Debug panel sections" },
+        { className: "debug-tab-list", role: "tablist", "aria-label": "디버그 패널 섹션" },
         ...DEBUG_TABS.map((tab) =>
           h(
             "button",
