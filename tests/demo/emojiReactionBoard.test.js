@@ -121,7 +121,7 @@ describe("EmojiReactionBoardApp", () => {
   });
 
   it("emoji 클릭 시 메트릭, recent activity, lastAction이 함께 갱신된다", async () => {
-    const { container } = mountApp();
+    const { container, app } = mountApp();
 
     clickEmoji(container, "rocket");
     await flushUpdates();
@@ -132,8 +132,8 @@ describe("EmojiReactionBoardApp", () => {
     expect(container.querySelector('[data-role="metric-leader"]')?.textContent).toContain("로켓");
     expect(container.querySelector('[data-role="metric-percentage"]')?.textContent).toContain("100.0");
     expect(container.querySelector('[data-role="recent-activity"]')?.textContent).toContain("에 반응했어요");
-    expect(container.querySelector('[data-role="last-action"] pre')?.textContent).toContain('"동작": "반응"');
-    expect(container.querySelector('[data-role="last-action"] pre')?.textContent).toContain('"이모지ID": "rocket"');
+    expect(app.getDebugSnapshot().lastAction?.type).toBe("react");
+    expect(app.getDebugSnapshot().lastAction?.payload?.emojiId).toBe("rocket");
   });
 
   it("Save 클릭 시 localStorage payload와 savedAt이 기록된다", async () => {
@@ -172,7 +172,7 @@ describe("EmojiReactionBoardApp", () => {
   });
 
   it("Restore는 마지막 저장 상태를 다시 라이브 상태에 적용한다", async () => {
-    const { container } = mountApp();
+    const { container, app } = mountApp();
 
     clickEmoji(container, "fire");
     await flushUpdates();
@@ -187,7 +187,7 @@ describe("EmojiReactionBoardApp", () => {
 
     expect(container.querySelector('[data-role="metric-total"]')?.textContent).toContain("1");
     expect(container.querySelector('[data-role="metric-leader"]')?.textContent).toContain("불꽃");
-    expect(container.querySelector('[data-role="last-action"] pre')?.textContent).toContain('"동작": "복원"');
+    expect(app.getDebugSnapshot().lastAction?.type).toBe("restore");
   });
 
   it("루트 렌더 안에 data-panel-root placeholder가 존재하고 비어 있다", () => {

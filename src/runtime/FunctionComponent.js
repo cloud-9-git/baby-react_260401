@@ -40,6 +40,7 @@ export class FunctionComponent {
     this.debugSnapshot = createEmptyDebugSnapshot();
     this.pendingStateReasons = [];
     this.currentRenderTrace = [];
+    this.currentHookUsage = null;
   }
 
   mount() {
@@ -144,6 +145,7 @@ export class FunctionComponent {
   renderComponent(reason = "render") {
     this.hookIndex = 0;
     this.pendingEffects = [];
+    this.currentHookUsage = createEmptyHookUsage();
     this.currentRenderTrace = [
       {
         name: getComponentName(this.renderFn),
@@ -154,6 +156,14 @@ export class FunctionComponent {
     const unresolvedVdom = withRenderContext(this, "root", () =>
       normalizeComponentResult(this.renderFn(this.props)),
     );
+
+    if (this.currentRenderTrace[0]) {
+      const hookUsage = normalizeHookUsage(this.currentHookUsage);
+
+      if (Object.keys(hookUsage).length > 0) {
+        this.currentRenderTrace[0].hookUsage = hookUsage;
+      }
+    }
 
     return resolveVNodeTree(unresolvedVdom, this);
   }
@@ -222,6 +232,15 @@ export class FunctionComponent {
     this.pendingStateReasons.push(`state[${index}] updated`);
   }
 
+  recordHookUsage(hookName) {
+    if (!this.currentHookUsage || typeof hookName !== "string" || hookName.trim() === "") {
+      return;
+    }
+
+    const normalizedName = hookName.trim();
+    this.currentHookUsage[normalizedName] = (this.currentHookUsage[normalizedName] ?? 0) + 1;
+  }
+
   commitDebugSnapshot(partialSnapshot = {}) {
     this.debugSnapshot = normalizeDebugSnapshot({
       ...this.debugSnapshot,
@@ -259,4 +278,23 @@ function getComponentName(component) {
   }
 
   return "Anonymous";
+}
+
+function createEmptyHookUsage() {
+  return {
+    useState: 0,
+    useEffect: 0,
+    useMemo: 0,
+    useDebugControls: 0,
+  };
+}
+
+function normalizeHookUsage(hookUsage) {
+  if (!hookUsage || typeof hookUsage !== "object") {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(hookUsage).filter(([, count]) => Number.isInteger(count) && count > 0),
+  );
 }

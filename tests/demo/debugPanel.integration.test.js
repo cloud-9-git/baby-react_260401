@@ -83,5 +83,7 @@ describe("demo page debug panel integration", () => {
     expect(debugContainer.textContent).toContain(model.actionText);
     expect(debugContainer.textContent).toContain(model.renderTraceItems[0].label);
     expect(debugContainer.textContent).toContain(model.patchItems[0].label);
+    expect(debugContainer.querySelector('[data-role="last-node-action"]')?.textContent).toContain('"패치유형":');
+    expect(debugContainer.querySelector('[data-role="last-node-action"]')?.textContent).toContain('"대상경로":');
   });
 });

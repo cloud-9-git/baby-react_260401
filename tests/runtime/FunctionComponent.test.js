@@ -243,7 +243,7 @@ describe("FunctionComponent runtime", () => {
       isUpdateScheduled: false,
       lastPatches: [],
       renderTrace: [
-        { name: "App", reason: "mount" },
+        { name: "App", reason: "mount", hookUsage: { useState: 1 } },
         { name: "Label", key: "label-1", reason: "mount" },
       ],
       lastAction: null,
@@ -257,11 +257,11 @@ describe("FunctionComponent runtime", () => {
       isMounted: true,
       isUpdateScheduled: false,
       lastPatches: [
-        { type: "TEXT", path: [0, 0], summary: 'text -> "1"' },
-        { type: "TEXT", path: [1, 0], summary: 'text -> "one"' },
+        { type: "TEXT", path: [0, 0], summary: 'text -> "1"', targetNodeType: "TEXT_NODE" },
+        { type: "TEXT", path: [1, 0], summary: 'text -> "one"', targetNodeType: "TEXT_NODE" },
       ],
       renderTrace: [
-        { name: "App", reason: "state[0] updated" },
+        { name: "App", reason: "state[0] updated", hookUsage: { useState: 1 } },
         { name: "Label", key: "label-1", reason: "state[0] updated" },
       ],
       lastAction: null,
@@ -305,10 +305,10 @@ describe("FunctionComponent runtime", () => {
       isMounted: true,
       isUpdateScheduled: false,
       lastPatches: [
-        { type: "TEXT", path: [0], summary: 'text -> "1"' },
+        { type: "TEXT", path: [0], summary: 'text -> "1"', targetNodeType: "TEXT_NODE" },
       ],
       renderTrace: [
-        { name: "App", reason: "state[0] updated" },
+        { name: "App", reason: "state[0] updated", hookUsage: { useDebugControls: 1, useState: 1 } },
       ],
       lastAction: {
         type: "react",

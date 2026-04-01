@@ -11,6 +11,7 @@ import { getCurrentInstance, isRootRender } from "./context.js";
 
 export function useState(initialValue) {
   const instance = getRootInstance();
+  instance.recordHookUsage?.("useState");
   const index = instance.consumeHookIndex();
   const existingHook = instance.hooks[index];
 
@@ -52,6 +53,7 @@ export function useEffect(effect, deps) {
   }
 
   const instance = getRootInstance();
+  instance.recordHookUsage?.("useEffect");
   const index = instance.consumeHookIndex();
   const existingHook = instance.hooks[index];
 
@@ -78,6 +80,7 @@ export function useMemo(factory, deps) {
   }
 
   const instance = getRootInstance();
+  instance.recordHookUsage?.("useMemo");
   const index = instance.consumeHookIndex();
   const existingHook = instance.hooks[index];
 
@@ -102,6 +105,7 @@ export function useMemo(factory, deps) {
 
 export function useDebugControls() {
   const instance = getRootInstance();
+  instance.recordHookUsage?.("useDebugControls");
 
   return {
     recordAction: instance.recordAction.bind(instance),
