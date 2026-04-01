@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Baby React Emoji Board</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&amp;family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&amp;family=Epilogue:wght@400;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "surface-container-lowest": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-primary-container": "#005234",
+                        "inverse-surface": "#27332e",
+                        "surface-container-highest": "#d8e6de",
+                        "on-tertiary": "#ffffff",
+                        "secondary-container": "#ffdbd0",
+                        "on-tertiary-fixed-variant": "#4e4800",
+                        "tertiary": "#666018",
+                        "on-error-container": "#93000a",
+                        "surface-dim": "#d0ddd5",
+                        "on-error": "#ffffff",
+                        "on-background": "#121e19",
+                        "on-secondary": "#ffffff",
+                        "secondary-fixed-dim": "#edbbac",
+                        "on-secondary-container": "#613e33",
+                        "secondary": "#7b5549",
+                        "on-tertiary-fixed": "#1f1c00",
+                        "tertiary-fixed": "#efe58f",
+                        "outline": "#647c72",
+                        "error": "#ba1a1a",
+                        "surface-container-high": "#deebe3",
+                        "surface-container": "#e3f1e9",
+                        "on-surface": "#121e19",
+                        "background": "#effdf4",
+                        "primary-fixed-dim": "#00e297",
+                        "on-tertiary-container": "#4e4800",
+                        "on-surface-variant": "#344c42",
+                        "secondary-fixed": "#ffdbd0",
+                        "primary": "#006c46",
+                        "on-secondary-fixed": "#2f140b",
+                        "surface-bright": "#effdf4",
+                        "on-primary-fixed": "#002112",
+                        "inverse-primary": "#00e297",
+                        "tertiary-fixed-dim": "#d2c976",
+                        "primary-fixed": "#4dffb2",
+                        "surface-container-low": "#e9f7ef",
+                        "primary-container": "#4dffb2",
+                        "surface-variant": "#d8e6de",
+                        "outline-variant": "#b2ccc0",
+                        "tertiary-container": "#efe58f",
+                        "surface": "#effdf4",
+                        "inverse-on-surface": "#e6f4ec",
+                        "on-primary-fixed-variant": "#005234",
+                        "on-primary": "#ffffff",
+                        "on-secondary-fixed-variant": "#613e33",
+                        "surface-tint": "#006c46"
+                    },
+                    fontFamily: {
+                        "headline": ["Archivo Black", "sans-serif"],
+                        "body": ["Plus Jakarta Sans", "sans-serif"],
+                        "label": ["Plus Jakarta Sans", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .emoji-grid-item {
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .emoji-grid-item:active {
+            transform: scale(0.9);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 bg-[#effdf4]/70 backdrop-blur-xl flex justify-between items-center px-12 h-20 w-full">
+<div class="font-['Archivo_Black'] text-2xl tracking-tighter text-[#121e19]">ReactRuntime</div>
+<nav class="hidden md:flex items-center gap-8 font-['Plus_Jakarta_Sans'] font-medium tracking-tight">
+<a class="text-[#006c46] font-bold border-b-2 border-[#006c46] pb-1 hover:scale-105 transition-transform duration-200" href="#">Docs</a>
+<a class="text-[#121e19]/60 hover:scale-105 transition-transform duration-200" href="#">Examples</a>
+<a class="text-[#121e19]/60 hover:scale-105 transition-transform duration-200" href="#">GitHub</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-[#006c46] p-2 hover:scale-105 transition-transform">settings</button>
+<button class="material-symbols-outlined text-[#006c46] p-2 hover:scale-105 transition-transform">help</button>
+</div>
+</header>
+<div class="flex pt-20">
+<!-- Main Content Area (75%) -->
+<main class="w-full md:w-[calc(100%-20rem)] px-8 md:px-16 py-12">
+<!-- Hero & Intro -->
+<section class="mb-20 mt-10">
+<h1 class="font-headline text-6xl md:text-8xl text-on-background tracking-tighter leading-none mb-8 max-w-4xl">
+                    Simple <span class="text-primary italic">Reactivity.</span><br/>Beautiful State.
+                </h1>
+<p class="text-xl md:text-2xl text-on-surface-variant max-w-2xl leading-relaxed">
+                    A custom React-like runtime designed for high-performance state propagation. Observe how reactions ripple through the component tree with millisecond precision.
+                </p>
+</section>
+<!-- Derived Metrics Cards (Bento Style) -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-20">
+<div class="bg-surface-container-low p-10 rounded-xl flex flex-col justify-between aspect-square md:aspect-auto">
+<span class="font-label text-xs tracking-widest uppercase text-outline">Total Votes</span>
+<div class="flex items-baseline gap-2">
+<span class="text-6xl font-headline text-on-background">1,284</span>
+<span class="text-primary font-bold">+12%</span>
+</div>
+</div>
+<div class="bg-primary-container p-10 rounded-xl flex flex-col justify-between aspect-square md:aspect-auto">
+<span class="font-label text-xs tracking-widest uppercase text-on-primary-container">Current Leader</span>
+<div class="flex items-center gap-4">
+<span class="text-7xl">🔥</span>
+<div>
+<span class="block font-headline text-2xl text-on-primary-container">Spicy</span>
+<span class="text-on-primary-container opacity-70">241 Votes</span>
+</div>
+</div>
+</div>
+<div class="bg-secondary-container p-10 rounded-xl flex flex-col justify-between aspect-square md:aspect-auto">
+<span class="font-label text-xs tracking-widest uppercase text-on-secondary-container">Lead Percentage</span>
+<div class="flex items-baseline gap-2">
+<span class="text-6xl font-headline text-on-secondary-container">18.7</span>
+<span class="text-2xl font-headline text-on-secondary-container">%</span>
+</div>
+</div>
+</section>
+<!-- Emoji Grid (Main Interaction) -->
+<section class="mb-20">
+<div class="flex items-end justify-between mb-8">
+<div>
+<h2 class="font-headline text-3xl mb-2">Emoji Board</h2>
+<p class="text-on-surface-variant">Click to dispatch a reactive action to the global store.</p>
+</div>
+<div class="bg-surface-container-highest px-4 py-2 rounded-full flex gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="filter_list">filter_list</span>
+<span class="font-label text-xs font-bold self-center">ALL SYMBOLS</span>
+</div>
+</div>
+<div class="bg-surface-container-low p-8 md:p-12 rounded-xl">
+<div class="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-4">
+<!-- Iterative emoji buttons -->
+<button class="emoji-grid-item aspect-square bg-surface-container-lowest rounded-lg text-3xl flex items-center justify-center hover:scale-110 active:scale-95 shadow-sm">😀</button>
+<button class="emoji-grid-item aspect-square bg-surface-container-lowest rounded-lg text-3xl flex items-center justify-center hover:scale-110 active:scale-95 shadow-sm border-4 border-primary-fixed ring-4 ring-primary/10">🔥</button>
+<button class="emoji-grid-item aspect-square bg-surface-container-lowest rounded-lg text-3xl flex items-center justify-center hover:scale-110 active:scale-95 shadow-sm">🚀</button>
+<button class="emoji-grid-item aspect-square bg-surface-container-lowest rounded-lg text-3xl flex items-center justify-center hover:scale-110 active:scale-95 shadow-sm">✨</button>
+<button class="emoji-grid-item aspect-square bg-surface-container-lowest rounded-lg text-3xl flex items-center justify-center hover:scale-110 active:scale-95 shadow-sm">🎉</button>
+<button class="emoji-grid-item aspect-square bg-surface-container-lowest rounded-lg text-3xl flex items-center justify-center hover:scale-110 active:scale-95 shadow-sm">❤️</button>
+<button class="emoji-grid-item aspect-square bg-surface-container-lowest rounded-lg text-3xl flex items-center justify-center hover:scale-110 active:scale-95 shadow-sm">🍕</button>
+<button class="emoji-grid-item aspect-square bg-surface-container-lowest rounded-lg text-3xl flex items-center justify-center hover:scale-110 active:scale-95 shadow-sm">🌈</button>
+<button class="emoji-grid-item aspect-square bg-surface-container-lowest rounded-lg text-3xl flex items-center justify-center hover:scale-110 active:scale-95 shadow-sm">🥑</button>
+<button class="emoji-grid-item aspect-square bg-surface-container-lowest rounded-lg text-3xl flex items-center justify-center hover:scale-110 active:scale-95 shadow-sm">💡</button>
+<button class="emoji-grid-item aspect-square bg-surface-container-lowest rounded-lg text-3xl flex items-center justify-center hover:scale-110 active:scale-95 shadow-sm">🦄</button>
+<button class="emoji-grid-item aspect-square bg-surface-container-lowest rounded-lg text-3xl flex items-center justify-center hover:scale-110 active:scale-95 shadow-sm">🌊</button>
+<button class="emoji-grid-item aspect-square bg-surface-container-lowest rounded-lg text-3xl flex items-center justify-center hover:scale-110 active:scale-95 shadow-sm">🍩</button>
+<button class="emoji-grid-item aspect-square bg-surface-container-lowest rounded-lg text-3xl flex items-center justify-center hover:scale-110 active:scale-95 shadow-sm">👾</button>
+<button class="emoji-grid-item aspect-square bg-surface-container-lowest rounded-lg text-3xl flex items-center justify-center hover:scale-110 active:scale-95 shadow-sm">🎈</button>
+<button class="emoji-grid-item aspect-square bg-surface-container-lowest rounded-lg text-3xl flex items-center justify-center hover:scale-110 active:scale-95 shadow-sm">🧪</button>
+<button class="emoji-grid-item aspect-square bg-surface-container-lowest rounded-lg text-3xl flex items-center justify-center hover:scale-110 active:scale-95 shadow-sm">🧬</button>
+<button class="emoji-grid-item aspect-square bg-surface-container-lowest rounded-lg text-3xl flex items-center justify-center hover:scale-110 active:scale-95 shadow-sm">🤖</button>
+<button class="emoji-grid-item aspect-square bg-surface-container-lowest rounded-lg text-3xl flex items-center justify-center hover:scale-110 active:scale-95 shadow-sm">🌍</button>
+<button class="emoji-grid-item aspect-square bg-surface-container-lowest rounded-lg text-3xl flex items-center justify-center hover:scale-110 active:scale-95 shadow-sm">💎</button>
+</div>
+</div>
+</section>
+<!-- Viz & Stream Section -->
+<section class="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-20">
+<!-- Reaction Rings Viz -->
+<div class="flex flex-col gap-6">
+<h3 class="font-headline text-2xl">Reaction Intensity</h3>
+<div class="relative aspect-square w-full max-w-md mx-auto flex items-center justify-center">
+<!-- Concentric Rings -->
+<div class="absolute w-full h-full rounded-full border-[20px] border-primary/5"></div>
+<div class="absolute w-4/5 h-4/5 rounded-full border-[20px] border-primary/10"></div>
+<div class="absolute w-3/5 h-3/5 rounded-full border-[20px] border-primary/20"></div>
+<div class="absolute w-2/5 h-2/5 rounded-full border-[20px] border-primary/40 flex items-center justify-center">
+<span class="text-4xl">🔥</span>
+</div>
+<!-- Floating markers -->
+<div class="absolute top-0 right-1/4 bg-surface-container-lowest shadow-lg px-3 py-1 rounded-full text-xs font-bold border border-outline-variant/20">🚀 Peak</div>
+<div class="absolute bottom-1/4 left-0 bg-surface-container-lowest shadow-lg px-3 py-1 rounded-full text-xs font-bold border border-outline-variant/20">✨ Trending</div>
+</div>
+</div>
+<!-- Recent Activity Stream -->
+<div class="flex flex-col gap-6">
+<h3 class="font-headline text-2xl">Recent Activity</h3>
+<div class="space-y-4">
+<div class="flex items-center gap-4 p-4 bg-surface-container-low rounded-lg">
+<div class="w-10 h-10 rounded-full bg-tertiary-fixed flex items-center justify-center text-on-tertiary-fixed font-bold">JD</div>
+<div class="flex-1">
+<p class="text-sm font-medium">John Doe <span class="text-outline">reacted with</span> 🔥</p>
+<p class="text-xs text-outline">2 minutes ago</p>
+</div>
+</div>
+<div class="flex items-center gap-4 p-4 bg-surface-container-low rounded-lg">
+<div class="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed font-bold">AS</div>
+<div class="flex-1">
+<p class="text-sm font-medium">Alice Smith <span class="text-outline">reacted with</span> 🚀</p>
+<p class="text-xs text-outline">5 minutes ago</p>
+</div>
+</div>
+<div class="flex items-center gap-4 p-4 bg-surface-container-low rounded-lg opacity-60">
+<div class="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center text-on-primary-fixed font-bold">BK</div>
+<div class="flex-1">
+<p class="text-sm font-medium">Bob King <span class="text-outline">reacted with</span> ✨</p>
+<p class="text-xs text-outline">12 minutes ago</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Right SideNavBar (Live Monitor) -->
+<aside class="hidden md:flex fixed right-0 top-0 h-full w-80 border-l border-[#b2ccc0]/15 bg-[#e9f7ef] flex flex-col gap-6 p-8 overflow-y-auto">
+<div class="mt-20">
+<div class="flex items-center gap-3 mb-2">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="close-up macro shot of a complex computer circuit board with glowing green LED indicators" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBEUlkQGljjdkuXPnlOCc3lAUNVymMY4Nanocs-fXtOUNNqY4_JWgrXyIk1im2gD-4X9l1Mwuhqk7VC2htPpLdgIFBlEwdLCYfxYz4fm2o8P_oW4S0QPmUKrFVQVUMdZKTthSbzFnM5SYV0mjA75rlef2ojM8tw_yxQznBRJ9amdHdOlr24qucUUvp0WPm3MYYNn0C2OKStO2bErZGMI8851nuRJ3FqbUnI_nJMzcpwdmOYOo9rA94YK1R_eKqQ9oV7Pz_UUmnYeW3d"/>
+</div>
+<div>
+<h4 class="font-['Archivo_Black'] text-lg text-[#121e19]">Live Monitor</h4>
+<p class="text-[10px] font-['Plus_Jakarta_Sans'] font-bold tracking-widest uppercase text-[#006c46]">v1.0.4-stable</p>
+</div>
+</div>
+<nav class="flex flex-col gap-2 my-8 font-['Plus_Jakarta_Sans'] font-bold text-sm tracking-widest uppercase">
+<button class="flex items-center gap-3 bg-[#4dffb2] text-[#121e19] rounded-full px-4 py-3 Active: scale-98 transition-transform">
+<span class="material-symbols-outlined" data-icon="data_object">data_object</span>
+                        Live State
+                    </button>
+<button class="flex items-center gap-3 text-[#121e19]/40 px-4 py-3 hover:bg-[#d8e6de] rounded-full transition-all">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+                        Action Log
+                    </button>
+<button class="flex items-center gap-3 text-[#121e19]/40 px-4 py-3 hover:bg-[#d8e6de] rounded-full transition-all">
+<span class="material-symbols-outlined" data-icon="rebase_edit">rebase_edit</span>
+                        Payloads
+                    </button>
+<button class="flex items-center gap-3 text-[#121e19]/40 px-4 py-3 hover:bg-[#d8e6de] rounded-full transition-all">
+<span class="material-symbols-outlined" data-icon="terminal">terminal</span>
+                        System
+                    </button>
+</nav>
+<div class="space-y-6">
+<div>
+<label class="font-label text-[10px] tracking-[0.2em] uppercase text-outline mb-3 block">Last Action</label>
+<div class="bg-[#121e19] text-[#4dffb2] p-4 rounded-lg font-mono text-xs overflow-x-auto">
+<pre>{
+  type: "VOTE_EMOJI",
+  id: "fire_01",
+  timestamp: 1715024,
+  user: "guest_82"
+}</pre>
+</div>
+</div>
+<div>
+<label class="font-label text-[10px] tracking-[0.2em] uppercase text-outline mb-3 block">Root State</label>
+<div class="bg-[#121e19] text-surface-container-lowest p-4 rounded-lg font-mono text-xs overflow-x-auto max-h-64">
+<pre>{
+  "selected": "🔥",
+  "votes": {
+    "🔥": 241,
+    "🚀": 182,
+    "✨": 94
+  },
+  "connected": 42,
+  "latency": "14ms",
+  "memory": "12.4MB"
+}</pre>
+</div>
+</div>
+</div>
+<!-- Persistence Controls -->
+<div class="mt-8 pt-8 border-t border-outline-variant/20 flex flex-col gap-3">
+<button class="w-full py-3 bg-on-background text-surface rounded-full text-xs font-bold font-label tracking-widest flex items-center justify-center gap-2 hover:opacity-90">
+<span class="material-symbols-outlined text-sm" data-icon="save">save</span>
+                        SAVE TO LOCALSTORAGE
+                    </button>
+<div class="grid grid-cols-2 gap-3">
+<button class="py-3 bg-surface-container-highest text-on-surface rounded-full text-[10px] font-bold font-label tracking-widest flex items-center justify-center gap-1 hover:bg-outline-variant/30 transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="restore">restore</span>
+                            RESTORE
+                        </button>
+<button class="py-3 bg-error-container text-on-error-container rounded-full text-[10px] font-bold font-label tracking-widest flex items-center justify-center gap-1 hover:opacity-80 transition-colors">
+<span class="material-symbols-outlined text-sm" data-icon="delete_sweep">delete_sweep</span>
+                            RESET
+                        </button>
+</div>
+</div>
+</div>
+</aside>
+</div>
+<!-- Footer -->
+<footer class="w-full border-t border-[#b2ccc0]/15 py-10 bg-[#effdf4] flex flex-col items-center justify-center gap-4 w-full md:pr-80">
+<div class="flex gap-8">
+<a class="font-['Plus_Jakarta_Sans'] text-xs font-medium tracking-wider uppercase opacity-50 text-[#121e19] hover:opacity-100 transition-opacity" href="#">Privacy</a>
+<a class="font-['Plus_Jakarta_Sans'] text-xs font-medium tracking-wider uppercase opacity-50 text-[#121e19] hover:opacity-100 transition-opacity" href="#">Terms</a>
+<a class="font-['Plus_Jakarta_Sans'] text-xs font-medium tracking-wider uppercase opacity-50 text-[#121e19] hover:opacity-100 transition-opacity" href="#">Changelog</a>
+</div>
+<p class="font-['Plus_Jakarta_Sans'] text-xs font-medium tracking-wider uppercase opacity-50 text-[#121e19]">© 2024 Lab Runtime. All rights reserved.</p>
+</footer>
+</body></html>

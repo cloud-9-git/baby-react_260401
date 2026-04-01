@@ -1,14 +1,18 @@
 import { FunctionComponent } from "../runtime/FunctionComponent.js";
-import { CodingSprintBoardApp } from "./CodingSprintBoardApp.js";
+import { EmojiReactionBoardApp } from "./app/EmojiReactionBoardApp.js";
 
-export function mountCodingSprintBoard(container) {
-  const app = new FunctionComponent(CodingSprintBoardApp, {}, container);
+export function mountEmojiReactionBoard(container) {
+  const app = new FunctionComponent(EmojiReactionBoardApp, {}, container);
   app.mount();
   return app;
+}
+
+export function mountCodingSprintBoard(container) {
+  return mountEmojiReactionBoard(container);
 }
 
 const root = typeof document !== "undefined" ? document.querySelector("[data-app-root]") : null;
 
 if (root) {
-  mountCodingSprintBoard(root);
+  mountEmojiReactionBoard(root);
 }
