@@ -154,7 +154,7 @@ function tryFindRemoved(oldChildren, newChildren) {
     }
   }
 
-  return k;
+  return k === newChildren.length ? k : -1;
 }
 
 function tryFindAdded(oldChildren, newChildren) {
@@ -174,7 +174,7 @@ function tryFindAdded(oldChildren, newChildren) {
     }
   }
 
-  return k;
+  return k === oldChildren.length ? k : -1;
 }
 
 function diffChildren(oldChildren, newChildren, path, patches) {
