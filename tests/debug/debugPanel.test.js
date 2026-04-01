@@ -22,10 +22,10 @@ describe("DebugPanelApp", () => {
 
     mountDebugPanel(container, source);
 
-    expect(container.textContent).toContain("No action yet");
-    expect(container.textContent).toContain("No render trace yet");
-    expect(container.textContent).toContain("No patches recorded");
-    expect(container.textContent).toContain("Render Count");
+    expect(container.textContent).toContain("아직 액션이 없어요");
+    expect(container.textContent).toContain("아직 렌더 추적이 없어요");
+    expect(container.textContent).toContain("아직 기록된 패치가 없어요");
+    expect(container.textContent).toContain("렌더 횟수");
     expect(container.textContent).toContain("0");
   });
 
@@ -79,13 +79,43 @@ describe("DebugPanelApp", () => {
     expect(container.textContent).toContain("App - state[2] updated");
     expect(container.textContent).toContain("REMOVE @ [2]: removed node");
   });
+
+  it("탭 버튼으로 action, render, patch 섹션을 전환한다", async () => {
+    const container = document.createElement("div");
+    const source = createMockDebugSource(
+      createMockDebugSnapshot({
+        renderTrace: [{ name: "App", reason: "state[0] updated" }],
+        lastPatches: [{ type: "TEXT", path: [0], summary: "updated label" }],
+      }),
+    );
+
+    mountDebugPanel(container, source);
+
+    const actionPanel = container.querySelector('[data-role="debug-tab-panel-action"]');
+    const renderPanel = container.querySelector('[data-role="debug-tab-panel-render"]');
+    const patchPanel = container.querySelector('[data-role="debug-tab-panel-patch"]');
+
+    expect(actionPanel?.hasAttribute("hidden")).toBe(false);
+    expect(renderPanel?.hasAttribute("hidden")).toBe(true);
+    expect(patchPanel?.hasAttribute("hidden")).toBe(true);
+
+    container.querySelector('[data-tab="render"]')?.click();
+    await flushUpdates();
+
+    expect(actionPanel?.hasAttribute("hidden")).toBe(true);
+    expect(renderPanel?.hasAttribute("hidden")).toBe(false);
+
+    container.querySelector('[data-tab="patch"]')?.click();
+    await flushUpdates();
+
+    expect(renderPanel?.hasAttribute("hidden")).toBe(true);
+    expect(patchPanel?.hasAttribute("hidden")).toBe(false);
+  });
 });
 
 describe("debug snapshot formatting", () => {
   it("payload와 patch path를 읽기 좋은 문자열로 포맷한다", () => {
-    expect(formatDebugAction({ type: "save", payload: { count: 3, scope: "board" } })).toBe(
-      'save: count=3, scope="board"',
-    );
+    expect(formatDebugAction({ type: "save", payload: { count: 3, scope: "board" } })).toBe('save: count=3, scope="board"');
     expect(formatPatchSummaryEntry({ type: "PROPS", path: [1, 2], summary: "className" })).toBe(
       "PROPS @ [1,2]: className",
     );

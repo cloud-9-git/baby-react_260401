@@ -104,18 +104,21 @@ export function formatDebugAction(action) {
   const normalized = normalizeDebugAction(action);
 
   if (!normalized) {
-    return "No action yet";
+    return "아직 액션이 없어요";
   }
 
   const payloadText = formatDebugPayload(normalized.payload);
-  return payloadText === "No payload" ? normalized.type : `${normalized.type}: ${payloadText}`;
+  const actionType = normalized.type;
+
+  return payloadText === "페이로드 없음" ? actionType : `${actionType}: ${payloadText}`;
 }
 
 export function formatRenderTraceEntry(entry) {
   if (!isPlainObject(entry) || typeof entry.name !== "string" || entry.name.trim() === "") {
-    return "Unknown component";
+    return "알 수 없는 컴포넌트";
   }
 
+  const displayName = entry.name.trim();
   const keyText =
     typeof entry.key === "string" && entry.key.trim() !== "" ? ` [${entry.key.trim()}]` : "";
   const reasonText =
@@ -123,12 +126,12 @@ export function formatRenderTraceEntry(entry) {
       ? entry.reason.trim()
       : "rendered";
 
-  return `${entry.name.trim()}${keyText} - ${reasonText}`;
+  return `${displayName}${keyText} - ${reasonText}`;
 }
 
 export function formatPatchSummaryEntry(entry) {
   if (!isPlainObject(entry) || typeof entry.type !== "string") {
-    return "UNKNOWN @ []";
+    return "알 수 없음 @ []";
   }
 
   const path = Array.isArray(entry.path) ? entry.path : [];
@@ -146,7 +149,7 @@ export function formatDebugPayload(payload) {
   const entries = Object.entries(normalized);
 
   if (entries.length === 0) {
-    return "No payload";
+    return "페이로드 없음";
   }
 
   return entries.map(([key, value]) => `${key}=${formatScalar(value)}`).join(", ");
@@ -213,7 +216,7 @@ function createPatchSummary(patch) {
     case "TEXT":
       return `text -> ${formatScalar(patch?.value ?? "")}`;
     case "PROPS":
-      return Object.keys(isPlainObject(patch?.props) ? patch.props : {}).join(", ") || "props updated";
+      return Object.keys(isPlainObject(patch?.props) ? patch.props : {}).join(", ") || "props changed";
     case "ADD":
       return `added ${describeNode(patch?.node)}`;
     case "REMOVE":

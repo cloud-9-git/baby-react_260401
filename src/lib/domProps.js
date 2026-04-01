@@ -92,7 +92,11 @@ function setEventProp(element, key, handler) {
   const wrappedHandler =
     owner && typeof owner.recordDebugAction === "function"
       ? function debugWrappedHandler(event) {
-        owner.recordDebugAction(createDebugAction(getEventName(key), event));
+        const source = event?.currentTarget ?? event?.target ?? null;
+
+        if (source?.dataset?.debugIgnoreAction !== "true") {
+          owner.recordDebugAction(createDebugAction(getEventName(key), event));
+        }
         return handler(event);
       }
       : handler;

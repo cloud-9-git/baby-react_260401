@@ -1,11 +1,15 @@
 import { FunctionComponent } from "../runtime/FunctionComponent.js";
+import { EmojiReactionBoardApp } from "./app/EmojiReactionBoardApp.js";
 import { DebugPanelApp } from "./panel/DebugPanelApp.js";
-import { CodingSprintBoardApp } from "./CodingSprintBoardApp.js";
 
-export function mountCodingSprintBoard(container) {
-  const app = new FunctionComponent(CodingSprintBoardApp, {}, container);
+export function mountEmojiReactionBoard(container) {
+  const app = new FunctionComponent(EmojiReactionBoardApp, {}, container);
   app.mount();
   return app;
+}
+
+export function mountCodingSprintBoard(container) {
+  return mountEmojiReactionBoard(container);
 }
 
 export function mountDebugPanel(container, debugTarget) {
@@ -15,8 +19,9 @@ export function mountDebugPanel(container, debugTarget) {
 }
 
 export function mountDemoPage(appContainer, debugContainer) {
-  const app = mountCodingSprintBoard(appContainer);
-  const debugPanel = debugContainer ? mountDebugPanel(debugContainer, app) : null;
+  const app = mountEmojiReactionBoard(appContainer);
+  const resolvedDebugContainer = debugContainer ?? appContainer.querySelector("[data-panel-root]");
+  const debugPanel = resolvedDebugContainer ? mountDebugPanel(resolvedDebugContainer, app) : null;
 
   return {
     app,

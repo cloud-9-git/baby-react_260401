@@ -71,13 +71,13 @@ describe("demo page debug panel integration", () => {
   it("사용자 상호작용 후 공개 debug snapshot 값이 패널에 반영된다", async () => {
     const { appContainer, debugContainer, app } = mountPage();
 
-    appContainer.querySelector('[data-action="load-sample"]')?.click();
+    appContainer.querySelector('[data-emoji-id="fire"]')?.click();
     await flushUpdates();
 
     const snapshot = app.getDebugSnapshot();
     const model = formatDebugPanelModel(snapshot);
 
-    expect(snapshot.lastAction?.type).toBe("load-sample");
+    expect(snapshot.lastAction?.type).toBe("react");
     expect(model.renderTraceItems.length).toBeGreaterThan(0);
     expect(model.patchItems.length).toBeGreaterThan(0);
     expect(debugContainer.textContent).toContain(model.actionText);
