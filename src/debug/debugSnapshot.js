@@ -1,3 +1,5 @@
+import { NodeType } from "../constants.js";
+
 function createBaseSnapshot() {
   return {
     renderCount: 0,
@@ -71,12 +73,24 @@ export function summarizePatches(patches) {
     const path = Array.isArray(patch?.path)
       ? patch.path.filter((segment) => Number.isInteger(segment) && segment >= 0)
       : [];
-
-    return {
+    const summarizedPatch = {
       type: typeof patch?.type === "string" ? patch.type : "UNKNOWN",
       path,
       summary: createPatchSummary(patch),
     };
+
+    const targetNodeType = inferTargetNodeType(patch);
+    const targetTag = inferTargetTag(patch);
+
+    if (targetNodeType) {
+      summarizedPatch.targetNodeType = targetNodeType;
+    }
+
+    if (targetTag) {
+      summarizedPatch.targetTag = targetTag;
+    }
+
+    return summarizedPatch;
   });
 }
 
@@ -125,8 +139,9 @@ export function formatRenderTraceEntry(entry) {
     typeof entry.reason === "string" && entry.reason.trim() !== ""
       ? entry.reason.trim()
       : "rendered";
+  const hookText = formatHookUsage(entry.hookUsage);
 
-  return `${displayName}${keyText} - ${reasonText}`;
+  return `${displayName}${keyText} - ${reasonText}${hookText}`;
 }
 
 export function formatPatchSummaryEntry(entry) {
@@ -166,11 +181,21 @@ function normalizePatchSummaryList(value) {
 
   return value.map((entry) => {
     if (isPatchSummary(entry)) {
-      return {
+      const normalizedEntry = {
         type: entry.type,
         path: [...entry.path],
         summary: entry.summary.trim(),
       };
+
+      if (typeof entry.targetNodeType === "string" && entry.targetNodeType.trim() !== "") {
+        normalizedEntry.targetNodeType = entry.targetNodeType.trim();
+      }
+
+      if (typeof entry.targetTag === "string" && entry.targetTag.trim() !== "") {
+        normalizedEntry.targetTag = entry.targetTag.trim();
+      }
+
+      return normalizedEntry;
     }
 
     return summarizePatches([entry])[0];
@@ -197,8 +222,37 @@ function normalizeRenderTraceList(value) {
         normalizedEntry.key = entry.key.trim();
       }
 
+      const hookUsage = normalizeHookUsage(entry.hookUsage);
+
+      if (Object.keys(hookUsage).length > 0) {
+        normalizedEntry.hookUsage = hookUsage;
+      }
+
       return normalizedEntry;
     });
+}
+
+function normalizeHookUsage(value) {
+  if (!isPlainObject(value)) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    Object.entries(value)
+      .filter(([key, count]) => typeof key === "string" && key.trim() !== "" && Number.isInteger(count) && count > 0)
+      .map(([key, count]) => [key.trim(), count]),
+  );
+}
+
+function formatHookUsage(hookUsage) {
+  const normalized = normalizeHookUsage(hookUsage);
+  const entries = Object.entries(normalized);
+
+  if (entries.length === 0) {
+    return "";
+  }
+
+  return ` · 훅: ${entries.map(([name, count]) => `${name} x${count}`).join(", ")}`;
 }
 
 function isPatchSummary(value) {
@@ -226,6 +280,32 @@ function createPatchSummary(patch) {
     default:
       return "";
   }
+}
+
+function inferTargetNodeType(patch) {
+  switch (patch?.type) {
+    case "TEXT":
+      return NodeType.TEXT;
+    case "PROPS":
+      return NodeType.ELEMENT;
+    case "ADD":
+    case "REPLACE":
+      return typeof patch?.node?.nodeType === "string" ? patch.node.nodeType : undefined;
+    case "REMOVE":
+      return undefined;
+    default:
+      return undefined;
+  }
+}
+
+function inferTargetTag(patch) {
+  if (patch?.type === "PROPS") {
+    return undefined;
+  }
+
+  return typeof patch?.node?.type === "string" && patch.node.type.trim() !== ""
+    ? patch.node.type.trim()
+    : undefined;
 }
 
 function describeNode(node) {

@@ -125,6 +125,10 @@ function createDebugAction(eventName, event) {
     payload.taskId = source.dataset.taskId;
   }
 
+  if (source?.dataset?.emojiId) {
+    payload.emojiId = source.dataset.emojiId;
+  }
+
   if (typeof source?.name === "string" && source.name !== "") {
     payload.name = source.name;
   }
@@ -140,6 +144,8 @@ function createDebugAction(eventName, event) {
   if (source?.tagName) {
     payload.tag = source.tagName.toLowerCase();
   }
+
+  payload.event = eventName;
 
   if (eventName === "click") {
     const label = normalizeText(source?.textContent);

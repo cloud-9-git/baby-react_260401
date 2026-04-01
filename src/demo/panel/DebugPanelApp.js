@@ -106,6 +106,7 @@ export function DebugPanelApp({ debugTarget }) {
         h(PatchSummaryPanel, { items: model.patchItems }),
       ),
     ),
+    h(NodeActionCard, { snapshot }),
   );
 }
 
@@ -122,7 +123,84 @@ function createTabClassName(isActive) {
   return `debug-tab-button${isActive ? " is-active" : ""}`;
 }
 
+function NodeActionCard({ snapshot }) {
+  return h(
+    "section",
+    {
+      className: "panel-card debug-card",
+      "data-role": "node-action-card",
+    },
+    h("div", { className: "debug-card-head" }, h("h2", {}, "마지막 런타임 노드 로그")),
+    h(
+      "div",
+      {
+        className: "debug-sidebar-console",
+        "data-role": "last-node-action",
+      },
+      h("pre", {}, formatRuntimeNodeLog(snapshot)),
+    ),
+  );
+}
+
 function readSnapshot(debugTarget) {
   const store = createDebugStore(debugTarget);
   return store.getSnapshot() ?? createEmptyDebugSnapshot();
+}
+
+function formatRuntimeNodeLog(snapshot) {
+  const firstPatch = Array.isArray(snapshot?.lastPatches) ? snapshot.lastPatches[0] : null;
+  const action = snapshot?.lastAction ?? null;
+
+  if (!firstPatch) {
+    return JSON.stringify({ 상태: "아직 기록된 런타임 노드 패치가 없어요" }, null, 2);
+  }
+
+  return JSON.stringify(
+    {
+      액션: action ? localizeActionType(action.type) : "없음",
+      원본액션: action?.type ?? "없음",
+      패치유형: firstPatch.type,
+      대상경로: `[${Array.isArray(firstPatch.path) ? firstPatch.path.join(",") : ""}]`,
+      런타임노드종류: firstPatch.targetNodeType ?? inferNodeTypeFromPatch(firstPatch.type),
+      태그: firstPatch.targetTag ?? "",
+      요약: firstPatch.summary ?? "",
+      전체패치수: Array.isArray(snapshot?.lastPatches) ? snapshot.lastPatches.length : 0,
+    },
+    null,
+    2,
+  );
+}
+
+function inferNodeTypeFromPatch(type) {
+  switch (type) {
+    case "TEXT":
+      return "TEXT_NODE";
+    case "PROPS":
+      return "ELEMENT_NODE";
+    default:
+      return "알 수 없음";
+  }
+}
+
+function localizeActionType(type) {
+  switch (type) {
+    case "react":
+      return "반응";
+    case "save":
+      return "저장";
+    case "restore":
+      return "복원";
+    case "reset":
+      return "초기화";
+    case "click":
+      return "클릭";
+    case "input":
+      return "입력";
+    case "change":
+      return "변경";
+    case "submit":
+      return "제출";
+    default:
+      return type ?? "";
+  }
 }

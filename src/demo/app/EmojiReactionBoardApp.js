@@ -41,7 +41,6 @@ export function EmojiReactionBoardApp() {
   );
   const trendingReaction = visibleRecentReactions[0] ?? null;
   const savedAtLabel = formatSavedAt(savedAt);
-  const lastActionJson = formatLastActionJson(lastAction);
 
   useEffect(() => {
     document.title = `베이비 리액트 이모지 보드 · ${topReaction?.emoji ?? "—"} 총 ${totalVotes}표`;
@@ -269,7 +268,6 @@ export function EmojiReactionBoardApp() {
           onMouseDown: handleDebugRailResizeStart,
         }),
         h(RightRailHost),
-        h(SidebarActionCard, { lastActionJson }),
         h(SidebarPersistenceControls, {
           savedAtLabel,
           onSave: handleSave,
@@ -572,22 +570,6 @@ function RightRailHost() {
   );
 }
 
-function SidebarActionCard({ lastActionJson }) {
-  return h(
-    "div",
-    { className: "debug-sidebar-card" },
-    h("label", { className: "font-label text-[10px] tracking-[0.2em] uppercase debug-sidebar-label block" }, "마지막 액션"),
-    h(
-      "div",
-      {
-        className: "debug-sidebar-console",
-        "data-role": "last-action",
-      },
-      h("pre", {}, lastActionJson),
-    ),
-  );
-}
-
 function SidebarPersistenceControls({ savedAtLabel, onSave, onRestore, onReset }) {
   return h(
     "div",
@@ -675,118 +657,6 @@ function createAction(type, { payload, summary, renderTraceHints, patchSummaryHi
 
 function formatNumber(value) {
   return new Intl.NumberFormat("ko-KR").format(value);
-}
-
-function formatLastActionJson(action) {
-  if (!action) {
-    return JSON.stringify({ 상태: "아직 액션이 없어요" }, null, 2);
-  }
-
-  return JSON.stringify(localizeActionForDisplay(action), null, 2);
-}
-
-function localizeActionForDisplay(action) {
-  return {
-    동작: localizeActionType(action.type),
-    요약: typeof action.summary === "string" ? action.summary : "",
-    시간: action.timestamp ? new Date(action.timestamp).toLocaleString("ko-KR") : "없음",
-    데이터: localizePayloadObject(action.payload),
-    렌더추적힌트: Array.isArray(action.renderTraceHints)
-      ? action.renderTraceHints.map((hint) => ({
-          컴포넌트: localizeComponentName(hint.name),
-          이유: hint.reason ?? "",
-        }))
-      : [],
-    패치요약힌트: Array.isArray(action.patchSummaryHints)
-      ? action.patchSummaryHints.map((hint) => ({
-          종류: localizePatchType(hint.type),
-          대상: hint.target ?? "",
-          요약: hint.summary ?? "",
-        }))
-      : [],
-  };
-}
-
-function localizePayloadObject(payload) {
-  if (!payload || typeof payload !== "object") {
-    return {};
-  }
-
-  return Object.fromEntries(
-    Object.entries(payload)
-      .filter(([, value]) => value != null)
-      .map(([key, value]) => [localizePayloadKey(key), value]),
-  );
-}
-
-function localizeActionType(type) {
-  switch (type) {
-    case "react":
-      return "반응";
-    case "save":
-      return "저장";
-    case "restore":
-      return "복원";
-    case "reset":
-      return "초기화";
-    default:
-      return type ?? "";
-  }
-}
-
-function localizePatchType(type) {
-  switch (type) {
-    case "TEXT":
-      return "텍스트";
-    case "PROPS":
-      return "속성";
-    case "ADD":
-      return "추가";
-    case "REMOVE":
-      return "삭제";
-    case "REPLACE":
-      return "교체";
-    default:
-      return type ?? "";
-  }
-}
-
-function localizePayloadKey(key) {
-  switch (key) {
-    case "emojiId":
-      return "이모지ID";
-    case "emoji":
-      return "이모지";
-    case "label":
-      return "레이블";
-    case "totalVotes":
-      return "총투표수";
-    case "savedAt":
-      return "저장시각";
-    case "restored":
-      return "복원됨";
-    case "selectedEmoji":
-      return "선택이모지";
-    case "preservedSnapshot":
-      return "저장본유지";
-    default:
-      return key;
-  }
-}
-
-function localizeComponentName(name) {
-  switch (name) {
-    case "EmojiReactionBoardApp":
-      return "이모지반응보드앱";
-    case "MetricsCards":
-      return "지표카드";
-    case "RecentActivity":
-      return "최근활동";
-    case "SidebarPersistenceControls":
-      return "저장컨트롤";
-    default:
-      return name ?? "";
-  }
 }
 
 function clamp(value, min, max) {
